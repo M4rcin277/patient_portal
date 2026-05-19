@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.dane import lekarze, pacjenci, wizyty
@@ -13,6 +14,7 @@ from app.pomocnicy import (
 from app.schematy import NowaWizyta
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 templates = Jinja2Templates(directory="app/templates")
 
