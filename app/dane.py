@@ -27,6 +27,7 @@ lekarze = [
         "nazwisko": "Kowalska",
         "specjalizacja": "Kardiolog",
         "miasto": "Warszawa",
+        "lokalizacja": "Centrum Medyczne Zdrowie, Warszawa",
     },
     {
         "id": 2,
@@ -34,6 +35,7 @@ lekarze = [
         "nazwisko": "Nowak",
         "specjalizacja": "Dermatolog",
         "miasto": "Krakow",
+        "lokalizacja": "Przychodnia Derm-Med, Kraków",
     },
 ]
 
@@ -76,5 +78,41 @@ wizyty = [
         "godzina": "09:00",
         "status": "zaplanowana",
         "notatka": "Wizyta kontrolna",
+    },
+]
+
+
+plan_opieki = [
+    {
+        "ikona": "bi-clipboard-pulse",
+        "data": "20.06.2026",
+        "podpis": "ważna do",
+        "tytul": "Aktywne recepty",
+        "opis": "Polocard 75 mg, Metformina 500 mg",
+        "etykieta": "2 aktywne",
+    },
+    {
+        "ikona": "bi-capsule",
+        "data": "codziennie",
+        "podpis": "rano",
+        "tytul": "Przypisane leki",
+        "opis": "Polocard 75 mg, Metformina 500 mg",
+        "etykieta": "2 leki",
+    },
+    {
+        "ikona": "bi-journal-medical",
+        "data": "przed wizytą",
+        "podpis": "zalecenie",
+        "tytul": "Zalecenia lekarza",
+        "opis": "Wykonać morfologię krwi",
+        "etykieta": "2 nowe",
+    },
+    {
+        "ikona": "bi-activity",
+        "data": "co tydzień",
+        "podpis": "kontrola",
+        "tytul": "Pomiar ciśnienia",
+        "opis": "2 razy w tygodniu",
+        "etykieta": "zadanie",
     },
 ]

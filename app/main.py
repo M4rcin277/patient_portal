@@ -2,12 +2,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.dane import lekarze, pacjenci, wizyty
+from app.dane import lekarze, pacjenci, plan_opieki, wizyty
 
 from app.pomocnicy import (
     pobierz_wolne_godziny,
-    przygotuj_wizyte_dla_pacjenta,
+    pobierz_nadchodzace_wizyty,
+    pobierz_wizyty_pacjenta,
+    przygotuj_kalendarz_wizyt,
     termin_jest_zajety,
+    znajdz_najblizsza_wizyte,
     znajdz_lekarza,
     znajdz_pacjenta,
 )
@@ -19,14 +22,26 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/panel-pacjenta")
-def panel_pacjenta(request: Request):
+def panel_pacjenta(
+    request: Request,
+    rok: int | None = None,
+    miesiac: int | None = None,
+):
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = []
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
+    najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
+    kalendarz_wizyt = przygotuj_kalendarz_wizyt(
+        nadchodzace_wizyty,
+        najblizsza_wizyta,
+        rok,
+        miesiac,
+    )
+    kolejna_wizyta = None
 
-    for wizyta in wizyty:
-        if wizyta["pacjent_id"] == pacjent_id:
-            moje_wizyty.append(przygotuj_wizyte_dla_pacjenta(wizyta))
+    if len(nadchodzace_wizyty) > 1:
+        kolejna_wizyta = nadchodzace_wizyty[1]
 
     return templates.TemplateResponse(
         request,
@@ -34,6 +49,11 @@ def panel_pacjenta(request: Request):
         {
             "pacjent": pacjent,
             "wizyty": moje_wizyty,
+            "nadchodzace_wizyty": nadchodzace_wizyty,
+            "najblizsza_wizyta": najblizsza_wizyta,
+            "kolejna_wizyta": kolejna_wizyta,
+            "plan_opieki": plan_opieki,
+            "kalendarz_wizyt": kalendarz_wizyt,
         },
     )
 
@@ -129,10 +149,4 @@ def pobierz_moj_profil():
 @app.get("/pacjenci/ja/wizyty")
 def pobierz_moje_wizyty():
     pacjent_id = 1
-    moje_wizyty = []
-
-    for wizyta in wizyty:
-        if wizyta["pacjent_id"] == pacjent_id:
-            moje_wizyty.append(przygotuj_wizyte_dla_pacjenta(wizyta))
-
-    return moje_wizyty
+    return pobierz_wizyty_pacjenta(pacjent_id)
