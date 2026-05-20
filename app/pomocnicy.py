@@ -170,12 +170,24 @@ def przygotuj_kalendarz_wizyt(
 
     for numer_dnia in range(1, liczba_dni + 1):
         wizyta = wizyty_w_miesiacu.get(numer_dnia)
+        data_dnia = date(rok, miesiac, numer_dnia)
+        typ_wizyty = None
+
+        if wizyta:
+            if data_dnia == dzisiaj:
+                typ_wizyty = "dzisiaj"
+            elif data_dnia > dzisiaj:
+                typ_wizyty = "przyszla"
+            else:
+                typ_wizyty = "miniona"
+
         dni.append(
             {
                 "numer": numer_dnia,
                 "wyciszony": False,
                 "ma_wizyte": wizyta is not None,
                 "wizyta": wizyta,
+                "typ_wizyty": typ_wizyty,
             }
         )
 

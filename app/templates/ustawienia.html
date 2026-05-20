@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Ustawienia{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Ustawienia</h1>
+    <p class="page-subtitle">Podstawowe informacje profilu pacjenta.</p>
+  </div>
+</header>
+
+<section class="section-card settings-card">
+  <div class="section-card-header">
+    <h2 class="section-title">Dane profilu</h2>
+    <span class="section-count">pacjent</span>
+  </div>
+
+  <div class="settings-list">
+    <div>
+      <span>Imię i nazwisko</span>
+      <strong>{{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}</strong>
+    </div>
+    <div>
+      <span>Email</span>
+      <strong>{{ pacjent["email"] }}</strong>
+    </div>
+    <div>
+      <span>Telefon</span>
+      <strong>{{ pacjent["telefon"] }}</strong>
+    </div>
+    <div>
+      <span>Adres</span>
+      <strong>{{ pacjent["adres"] }}</strong>
+    </div>
+  </div>
+</section>
+{% endblock %}

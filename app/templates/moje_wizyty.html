@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Moje wizyty{% endblock %}
+
+{% block content %}
+<header class="page-header visits-page-header">
+  <div>
+    <h1 class="page-title">Moje wizyty</h1>
+    <p class="page-subtitle">Twój personalny kalendarz wizyt.</p>
+  </div>
+</header>
+
+<section class="appointments-shell">
+  <div class="section-card appointments-calendar-card">
+    <div class="appointments-calendar-header">
+      <a
+        class="calendar-nav-button large"
+        href="/moje-wizyty?rok={{ kalendarz_wizyt['poprzedni_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['poprzedni_miesiac']['miesiac'] }}"
+        aria-label="Poprzedni miesiąc"
+      >
+        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+      </a>
+      <div>
+        <h2 class="section-title">{{ kalendarz_wizyt["miesiac"] }}</h2>
+        <p>Kolory dni pokazują status wizyt w wybranym miesiącu.</p>
+      </div>
+      <a
+        class="calendar-nav-button large"
+        href="/moje-wizyty?rok={{ kalendarz_wizyt['nastepny_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['nastepny_miesiac']['miesiac'] }}"
+        aria-label="Następny miesiąc"
+      >
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    <div class="large-calendar" aria-label="Kalendarz wizyt">
+      <span class="large-calendar-day-name">Pn</span>
+      <span class="large-calendar-day-name">Wt</span>
+      <span class="large-calendar-day-name">Śr</span>
+      <span class="large-calendar-day-name">Cz</span>
+      <span class="large-calendar-day-name">Pt</span>
+      <span class="large-calendar-day-name">So</span>
+      <span class="large-calendar-day-name">Nd</span>
+
+      {% for dzien in kalendarz_wizyt["dni"] %}
+      <div class="large-calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['ma_wizyte'] %} has-visit visit-{{ dzien['typ_wizyty'] }}{% endif %}">
+        <span>{{ dzien["numer"] }}</span>
+        {% if dzien["ma_wizyte"] %}
+        <strong>{{ dzien["wizyta"]["godzina"] }}</strong>
+        <small>{{ dzien["wizyta"]["specjalizacja"] }}</small>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="calendar-legend" aria-label="Legenda kalendarza">
+      <span><i class="legend-dot planned"></i>Zaplanowane</span>
+      <span><i class="legend-dot today"></i>Dzisiaj</span>
+      <span><i class="legend-dot past"></i>Minione</span>
+      <span><i class="legend-dot reminder"></i>Przypomnienie</span>
+    </div>
+  </div>
+
+  <section class="visits-support-strip" aria-label="Szybkie akcje wizyt">
+    <article class="visits-support-item">
+      <div class="support-icon">
+        <i class="bi bi-chat-dots" aria-hidden="true"></i>
+      </div>
+      <div>
+        <strong>Potrzebujesz pomocy?</strong>
+        <span>Skontaktuj się z nami.</span>
+      </div>
+    </article>
+
+    <article class="visits-support-item">
+      <div class="support-icon">
+        <i class="bi bi-bell" aria-hidden="true"></i>
+      </div>
+      <div>
+        <strong>Przypomnienia</strong>
+        <span>Powiadomienia o wizytach.</span>
+      </div>
+      <label class="support-toggle" aria-label="Włącz przypomnienia">
+        <input type="checkbox" checked>
+        <span></span>
+      </label>
+    </article>
+
+    <article class="visits-support-item">
+      <div class="support-icon">
+        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+      </div>
+      <div>
+        <strong>Synchronizacja</strong>
+        <span>Dodaj wizyty do kalendarza.</span>
+      </div>
+    </article>
+  </section>
+
+  <aside class="section-card appointments-panel">
+    <div class="appointments-panel-actions">
+      <a class="appointment-primary-action" href="/szybki-zapis">
+        Utwórz wizytę
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      </a>
+      <button class="appointment-secondary-action" type="button">
+        Przesuń wizytę
+        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="section-card-header">
+      <h2 class="section-title">Nadchodzące wizyty</h2>
+      <span class="section-count">{{ nadchodzace_wizyty|length }} terminy</span>
+    </div>
+
+    {% if nadchodzace_wizyty %}
+    <div class="appointments-panel-list">
+      {% for wizyta in nadchodzace_wizyty %}
+      <button
+        class="appointment-list-button"
+        type="button"
+        data-bs-toggle="modal"
+        data-bs-target="#wizytaModal{{ wizyta['id'] }}"
+      >
+        <span class="appointment-list-date">
+          <strong>{{ wizyta["data_czytelna"] }}</strong>
+          <small>{{ wizyta["godzina"] }}</small>
+        </span>
+        <span class="appointment-list-main">
+          <strong>{{ wizyta["lekarz"] }}</strong>
+          <small>{{ wizyta["specjalizacja"] }}</small>
+        </span>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-page-state compact">
+      <i class="bi bi-calendar-x" aria-hidden="true"></i>
+      <strong>Brak nadchodzących wizyt</strong>
+      <span>W kalendarzu mogą być widoczne starsze terminy, ale lista pokazuje tylko przyszłe wizyty.</span>
+    </div>
+    {% endif %}
+
+    <div class="visit-prep-card">
+      <div class="visit-prep-icon">
+        <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
+      </div>
+      <div>
+        <strong>Zalecenia przed wizytą</strong>
+        <p>Pamiętaj, aby zabrać wyniki badań oraz listę przyjmowanych leków.</p>
+        <button type="button">Zobacz listę zaleceń <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </aside>
+</section>
+
+{% for wizyta in nadchodzace_wizyty %}
+<div
+  class="modal fade"
+  id="wizytaModal{{ wizyta['id'] }}"
+  tabindex="-1"
+  aria-labelledby="wizytaModalLabel{{ wizyta['id'] }}"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Szczegóły wizyty</p>
+          <h2 class="modal-title fs-5" id="wizytaModalLabel{{ wizyta['id'] }}">
+            {{ wizyta["specjalizacja"] }}
+          </h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="appointment-modal-doctor">
+          <div class="directory-icon">
+            <i class="bi bi-person-badge" aria-hidden="true"></i>
+          </div>
+          <div>
+            <strong>{{ wizyta["lekarz"] }}</strong>
+            <span>{{ wizyta["lokalizacja"] }}</span>
+          </div>
+        </div>
+
+        <div class="appointment-modal-grid">
+          <div>
+            <span>Data</span>
+            <strong>{{ wizyta["data_czytelna"] }}</strong>
+          </div>
+          <div>
+            <span>Godzina</span>
+            <strong>{{ wizyta["godzina"] }}</strong>
+          </div>
+          <div>
+            <span>Status</span>
+            <strong>{{ wizyta["status"] }}</strong>
+          </div>
+          <div>
+            <span>Numer wizyty</span>
+            <strong>#{{ wizyta["id"] }}</strong>
+          </div>
+        </div>
+
+        <div class="appointment-modal-note">
+          <span>Notatka</span>
+          <p>{{ wizyta["notatka"] }}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+        <a class="modal-primary-button" href="/szybki-zapis">Umów kolejną</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

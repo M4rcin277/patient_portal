@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Szybki zapis{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Szybki zapis</h1>
+    <p class="page-subtitle">Wybierz lekarza, datę i godzinę planowanej wizyty.</p>
+  </div>
+</header>
+
+<div class="booking-layout">
+  <section class="section-card booking-card">
+    <div class="section-card-header">
+      <h2 class="section-title">Nowa wizyta</h2>
+      <span class="section-count">formularz</span>
+    </div>
+
+    <form class="booking-form" action="#" method="post">
+      <label class="form-field">
+        <span>Lekarz</span>
+        <select name="lekarz_id">
+          {% for lekarz in lekarze %}
+          <option value="{{ lekarz['id'] }}">
+            {{ lekarz["imie"] }} {{ lekarz["nazwisko"] }} - {{ lekarz["specjalizacja"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <div class="form-grid">
+        <label class="form-field">
+          <span>Data</span>
+          <input type="date" name="data" value="2026-06-10">
+        </label>
+
+        <label class="form-field">
+          <span>Godzina</span>
+          <select name="godzina">
+            {% for godzina in godziny_przyjec %}
+            <option value="{{ godzina }}">{{ godzina }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <label class="form-field">
+        <span>Notatka</span>
+        <textarea name="notatka" rows="4" placeholder="Krótko opisz powód wizyty"></textarea>
+      </label>
+
+      <button class="form-submit" type="submit">
+        Zapisz termin
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </button>
+    </form>
+  </section>
+
+  <aside class="section-card booking-help-card">
+    <h2 class="section-title">Najbliższe dostępne godziny</h2>
+    <div class="quick-hours">
+      {% for godzina in godziny_przyjec[:5] %}
+      <span>{{ godzina }}</span>
+      {% endfor %}
+    </div>
+    <p>
+      Na tym etapie widok pokazuje formularz. W kolejnym kroku podepniemy go pod backend
+      i będziemy sprawdzać zajęte terminy.
+    </p>
+  </aside>
+</div>
+{% endblock %}

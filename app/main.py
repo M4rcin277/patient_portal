@@ -2,7 +2,14 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.dane import lekarze, pacjenci, plan_opieki, wizyty
+from app.dane import (
+    apteki,
+    godziny_przyjec,
+    historia_medyczna,
+    lekarze,
+    plan_opieki,
+    wizyty,
+)
 
 from app.pomocnicy import (
     pobierz_wolne_godziny,
@@ -48,6 +55,7 @@ def panel_pacjenta(
         "panel_pacjent.html",
         {
             "pacjent": pacjent,
+            "aktywna_strona": "dashboard",
             "wizyty": moje_wizyty,
             "nadchodzace_wizyty": nadchodzace_wizyty,
             "najblizsza_wizyta": najblizsza_wizyta,
@@ -56,6 +64,133 @@ def panel_pacjenta(
             "kalendarz_wizyt": kalendarz_wizyt,
         },
     )
+
+
+@app.get("/moje-wizyty")
+def widok_moje_wizyty(
+    request: Request,
+    rok: int | None = None,
+    miesiac: int | None = None,
+):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
+    najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
+    kalendarz_wizyt = przygotuj_kalendarz_wizyt(
+        moje_wizyty,
+        najblizsza_wizyta,
+        rok,
+        miesiac,
+    )
+
+    return templates.TemplateResponse(
+        request,
+        "moje_wizyty.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "wizyty",
+            "nadchodzace_wizyty": nadchodzace_wizyty,
+            "kalendarz_wizyt": kalendarz_wizyt,
+        },
+    )
+
+
+@app.get("/szybki-zapis")
+def widok_szybki_zapis(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+
+    return templates.TemplateResponse(
+        request,
+        "szybki_zapis.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "szybki_zapis",
+            "lekarze": lekarze,
+            "godziny_przyjec": godziny_przyjec,
+        },
+    )
+
+
+@app.get("/recepty")
+def widok_recepty(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+
+    return templates.TemplateResponse(
+        request,
+        "recepty.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "recepty",
+            "plan_opieki": plan_opieki,
+        },
+    )
+
+
+@app.get("/lekarze-widok")
+def widok_lekarze(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+
+    return templates.TemplateResponse(
+        request,
+        "lekarze.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "lekarze",
+            "lekarze": lekarze,
+        },
+    )
+
+
+@app.get("/apteki")
+def widok_apteki(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+
+    return templates.TemplateResponse(
+        request,
+        "apteki.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "apteki",
+            "apteki": apteki,
+        },
+    )
+
+
+@app.get("/historia")
+def widok_historia(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+
+    return templates.TemplateResponse(
+        request,
+        "historia.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "historia",
+            "historia_medyczna": historia_medyczna,
+        },
+    )
+
+
+@app.get("/ustawienia")
+def widok_ustawienia(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+
+    return templates.TemplateResponse(
+        request,
+        "ustawienia.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "ustawienia",
+        },
+    )
+
 
 @app.get("/")
 def strona_glowna():

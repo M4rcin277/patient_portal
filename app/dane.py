@@ -116,3 +116,39 @@ plan_opieki = [
         "etykieta": "zadanie",
     },
 ]
+
+
+apteki = [
+    {
+        "id": 1,
+        "nazwa": "Apteka Zdrowie",
+        "adres": "ul. Zdrowa 12, Warszawa",
+        "godziny": "08:00-20:00",
+    },
+    {
+        "id": 2,
+        "nazwa": "Apteka Centrum",
+        "adres": "ul. Prosta 4, Warszawa",
+        "godziny": "07:00-22:00",
+    },
+    {
+        "id": 3,
+        "nazwa": "Apteka Dyżurna",
+        "adres": "ul. Nocna 8, Warszawa",
+        "godziny": "całodobowo",
+    },
+]
+
+
+historia_medyczna = [
+    {
+        "data": "2026-03-12",
+        "tytul": "Badanie kontrolne",
+        "opis": "Omówienie wyników morfologii krwi.",
+    },
+    {
+        "data": "2026-02-02",
+        "tytul": "Konsultacja kardiologiczna",
+        "opis": "Zalecenie regularnego pomiaru ciśnienia.",
+    },
+]

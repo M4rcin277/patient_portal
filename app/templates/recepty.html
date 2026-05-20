@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Recepty{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Recepty</h1>
+    <p class="page-subtitle">Podstawowy widok recept, leków i zaleceń z planu opieki.</p>
+  </div>
+</header>
+
+<section class="section-card">
+  <div class="section-card-header">
+    <h2 class="section-title">Plan leczenia</h2>
+    <span class="section-count">{{ plan_opieki|length }} pozycje</span>
+  </div>
+
+  <div class="basic-list">
+    {% for element in plan_opieki %}
+    <article class="basic-list-item">
+      <div class="basic-list-icon">
+        <i class="bi {{ element['ikona'] }}" aria-hidden="true"></i>
+      </div>
+      <div>
+        <strong>{{ element["tytul"] }}</strong>
+        <span>{{ element["opis"] }}</span>
+      </div>
+      <span class="basic-badge">{{ element["etykieta"] }}</span>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

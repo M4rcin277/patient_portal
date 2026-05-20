@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Historia{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Historia</h1>
+    <p class="page-subtitle">Pierwszy widok historii medycznej pacjenta.</p>
+  </div>
+</header>
+
+<section class="section-card">
+  <div class="section-card-header">
+    <h2 class="section-title">Ostatnie wpisy</h2>
+    <span class="section-count">{{ historia_medyczna|length }} wpisy</span>
+  </div>
+
+  <div class="basic-list">
+    {% for wpis in historia_medyczna %}
+    <article class="basic-list-item">
+      <div class="basic-date">
+        {{ wpis["data"] }}
+      </div>
+      <div>
+        <strong>{{ wpis["tytul"] }}</strong>
+        <span>{{ wpis["opis"] }}</span>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

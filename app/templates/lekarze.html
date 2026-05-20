@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Lekarze{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Lekarze</h1>
+    <p class="page-subtitle">Lista lekarzy dostępnych w portalu pacjenta.</p>
+  </div>
+</header>
+
+<section class="cards-grid">
+  {% for lekarz in lekarze %}
+  <article class="section-card directory-card">
+    <div class="directory-icon">
+      <i class="bi bi-person-badge" aria-hidden="true"></i>
+    </div>
+    <div>
+      <h2 class="section-title">{{ lekarz["imie"] }} {{ lekarz["nazwisko"] }}</h2>
+      <p>{{ lekarz["specjalizacja"] }}</p>
+      <span>{{ lekarz["lokalizacja"] }}</span>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
