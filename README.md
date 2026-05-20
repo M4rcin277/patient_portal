@@ -4,9 +4,10 @@ Aplikacja webowa tworzona jako projekt portfolio Junior Python Developer.
 
 Celem projektu jest stworzenie systemu umożliwiającego:
 - zarządzanie wizytami,
-- historią medyczną,
-- receptami,
-- wyszukiwaniem lekarzy i aptek.
+- podgląd profilu pacjenta,
+- obsługę panelu pacjenta,
+- wyszukiwanie lekarzy i aptek,
+- późniejszą obsługę historii medycznej i recept.
 
 ---
 
@@ -14,22 +15,33 @@ Celem projektu jest stworzenie systemu umożliwiającego:
 
 - Python
 - FastAPI
-- PostgreSQL
-- MongoDB
 - Jinja2
 - Bootstrap 5
-- Docker
-- GitHub Actions
+- Bootstrap Icons
+- PostgreSQL w późniejszym etapie
+- MongoDB w późniejszym etapie
+- Docker w późniejszym etapie
+- GitHub, branche i Pull Requesty
 
 ---
 
 ## Aktualny etap projektu
 
-- Utworzone środowisko wirtualne Python
-- Zainstalowane FastAPI i Uvicorn
-- Utworzona pierwsza aplikacja FastAPI
-- Dodany plik `requirements.txt`
-- Dodany plik `.gitignore`
+Projekt ma już podstawowy backend FastAPI oraz pierwszy widok panelu pacjenta renderowany przez Jinja2.
+
+Aktualnie dostępne są między innymi:
+- endpoint statusu aplikacji,
+- lista lekarzy,
+- lista wizyt,
+- dodawanie wizyty przez `POST /wizyty`,
+- sprawdzanie, czy pacjent i lekarz istnieją,
+- blokada dodania wizyty na zajęty termin,
+- endpoint wolnych terminów lekarza,
+- profil aktualnego pacjenta,
+- wizyty aktualnego pacjenta,
+- panel pacjenta pod adresem `/panel-pacjenta`.
+
+Na tym etapie dane są przechowywane tymczasowo w listach Pythonowych. W kolejnych etapach zostaną przeniesione do bazy danych.
 
 ---
 
@@ -38,7 +50,7 @@ Celem projektu jest stworzenie systemu umożliwiającego:
 ### Aktywacja środowiska
 
 ```powershell
-.\venv\Scripts\activate
+.\.venv\Scripts\activate
 ```
 
 ### Uruchomienie aplikacji
@@ -57,6 +69,12 @@ Aplikacja:
 http://127.0.0.1:8000
 ```
 
+Panel pacjenta:
+
+```text
+http://127.0.0.1:8000/panel-pacjenta
+```
+
 Dokumentacja API:
 
 ```text
@@ -69,21 +87,20 @@ http://127.0.0.1:8000/docs
 
 - Rejestracja i logowanie użytkowników
 - Role: pacjent i lekarz
-- Panel pacjenta
 - Panel lekarza
-- Umawianie wizyt
+- Umawianie wizyt z poziomu widoku HTML
 - Historia medyczna
 - Recepty
 - Wyszukiwarka lekarzy
-- Mapa aptek i lekarzy
+- Mapa aptek i placówek medycznych
+- Integracja z PostgreSQL
+- Integracja z MongoDB
+- Docker Compose
+- Testy automatyczne
+- CI/CD GitHub Actions
 
 ---
 
 ## Status projektu
 
-Projekt jest obecnie rozwijany i będzie stopniowo rozszerzany o:
-- autoryzację JWT,
-- integrację PostgreSQL i MongoDB,
-- Docker Compose,
-- testy automatyczne,
-- CI/CD GitHub Actions.
+Projekt jest rozwijany etapami. Obecny etap skupia się na uporządkowaniu dashboardu pacjenta, podstawowej logice wizyt i dobrych praktykach pracy z Git oraz Pull Requestami.

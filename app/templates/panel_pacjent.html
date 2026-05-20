@@ -12,818 +12,8 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
       rel="stylesheet"
     >
-    <style>
-      :root {
-        --sidebar-bg: #061a35;
-        --sidebar-bg-dark: #031226;
-        --accent: #1559d1;
-        --text-dark: #071631;
-        --text-muted: #53627a;
-        --border-soft: #e6ebf2;
-      }
-
-      body {
-        color: var(--text-dark);
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-
-      .app-layout {
-        display: flex;
-        min-height: 100vh;
-        background: #f6f8fc;
-      }
-
-      .sidebar {
-        position: sticky;
-        top: 0;
-        width: 224px;
-        flex: 0 0 224px;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        padding: 28px 18px 24px;
-        color: #ffffff;
-        background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-dark));
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 48px;
-      }
-
-      .brand-mark {
-        width: 52px;
-        height: 52px;
-        display: grid;
-        place-items: center;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #164ea8, #0a347e);
-        font-weight: 800;
-        font-size: 22px;
-        overflow: hidden;
-      }
-
-      .brand-logo {
-        width: 40px;
-        height: 40px;
-        display: block;
-        object-fit: contain;
-        object-position: center;
-      }
-
-      .brand-fallback {
-        display: none;
-      }
-
-      .brand-title {
-        margin: 0;
-        font-size: 19px;
-        line-height: 1.2;
-        font-weight: 700;
-      }
-
-      .sidebar-nav {
-        display: grid;
-        gap: 10px;
-      }
-
-      .sidebar-link {
-        display: flex;
-        align-items: center;
-        gap: 13px;
-        min-height: 48px;
-        padding: 0 15px;
-        border-radius: 10px;
-        color: rgba(255, 255, 255, 0.88);
-        text-decoration: none;
-        font-size: 15.5px;
-        font-weight: 600;
-      }
-
-      .sidebar-link:hover,
-      .sidebar-link.active {
-        color: #ffffff;
-        background: linear-gradient(135deg, #1559d1, #0c46b5);
-      }
-
-      .sidebar-icon {
-        width: 24px;
-        text-align: center;
-        opacity: 0.95;
-      }
-
-      .sidebar-icon-img {
-        width: 22px;
-        height: 22px;
-        display: block;
-      }
-
-      .sidebar-icon-bi {
-        display: block;
-        font-size: 22px;
-        line-height: 1;
-      }
-
-      .sidebar-divider {
-        margin: 30px 10px 22px;
-        border-top: 1px solid rgba(255, 255, 255, 0.16);
-      }
-
-      .sidebar-secondary {
-        margin-top: 0;
-      }
-
-      .sidebar-profile {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        margin-top: 34px;
-        padding-top: 12px;
-      }
-
-      .profile-avatar {
-        width: 44px;
-        height: 44px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: #ffffff;
-        color: var(--text-dark);
-        font-weight: 700;
-      }
-
-      .profile-name {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 700;
-      }
-
-      .profile-role {
-        margin: 0;
-        color: rgba(255, 255, 255, 0.68);
-        font-size: 13px;
-      }
-
-      .main-content {
-        flex: 1;
-        min-width: 0;
-        padding: 28px 38px;
-      }
-
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 18px;
-      }
-
-      .page-title {
-        margin: 0 0 4px;
-        font-size: 26px;
-        font-weight: 800;
-      }
-
-      .page-subtitle {
-        margin: 0;
-        color: var(--text-muted);
-        font-size: 15px;
-      }
-
-      .content-card {
-        border: 1px solid var(--border-soft);
-        border-radius: 12px;
-        background: #ffffff;
-        box-shadow: 0 14px 34px rgba(13, 30, 57, 0.06);
-      }
-
-      .content-card .card-body {
-        padding: 24px 28px;
-      }
-
-      .next-visit-card {
-        position: relative;
-        min-height: 178px;
-        display: flex;
-        align-items: center;
-        margin-bottom: 16px;
-        padding: 20px 28px;
-        border-radius: 14px;
-        overflow: hidden;
-        color: #ffffff;
-        background: #061733;
-        box-shadow: 0 18px 38px rgba(5, 20, 45, 0.16);
-      }
-
-      .next-visit-bg {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-      }
-
-      .next-visit-card::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          90deg,
-          rgba(2, 12, 29, 0.36) 0%,
-          rgba(2, 12, 29, 0.18) 34%,
-          rgba(2, 12, 29, 0) 72%
-        );
-        z-index: 1;
-      }
-
-      .next-visit-content {
-        position: relative;
-        z-index: 2;
-        max-width: 480px;
-      }
-
-      .next-visit-label {
-        margin: 0 0 10px;
-        color: rgba(255, 255, 255, 0.78);
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
-
-      .next-visit-date {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 12px;
-      }
-
-      .next-visit-date strong {
-        font-size: 24px;
-        line-height: 1;
-      }
-
-      .day-chip {
-        padding: 4px 10px;
-        border-radius: 999px;
-        color: #8db8ff;
-        background: rgba(21, 89, 209, 0.28);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .visit-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 18px 24px;
-        margin-bottom: 10px;
-        color: rgba(255, 255, 255, 0.9);
-      }
-
-      .visit-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .visit-doctor {
-        display: grid;
-        gap: 2px;
-      }
-
-      .visit-doctor small {
-        color: rgba(255, 255, 255, 0.76);
-      }
-
-      .visit-place {
-        margin: 0 0 14px;
-        color: rgba(255, 255, 255, 0.82);
-      }
-
-      .visit-action {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        min-height: 36px;
-        padding: 0 18px;
-        border-radius: 8px;
-        color: #ffffff;
-        background: #1559d1;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 700;
-      }
-
-      .visit-action:hover {
-        color: #ffffff;
-        background: #0d4bbb;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-        gap: 16px;
-      }
-
-      .section-card {
-        min-height: 305px;
-        padding: 20px 22px;
-        border: 1px solid var(--border-soft);
-        border-radius: 14px;
-        background: #ffffff;
-        box-shadow: 0 14px 34px rgba(13, 30, 57, 0.06);
-      }
-
-      .section-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
-        margin-bottom: 14px;
-      }
-
-      .section-title {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 800;
-      }
-
-      .section-link {
-        color: #0d4bbb;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 700;
-      }
-
-      .summary-stack {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .summary-block {
-        position: relative;
-        min-height: 150px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        padding: 18px;
-        border: 1px solid #e8eef7;
-        border-radius: 14px;
-        background: #f8fbff;
-      }
-
-      .summary-block.wide {
-        grid-column: 1 / -1;
-        min-height: 128px;
-        background: linear-gradient(135deg, #fff8ed, #ffffff);
-      }
-
-      .summary-icon {
-        width: 44px;
-        height: 44px;
-        display: grid;
-        place-items: center;
-        border-radius: 12px;
-        font-size: 20px;
-      }
-
-      .summary-icon.blue {
-        color: #1559d1;
-        background: #dbe6ff;
-      }
-
-      .summary-icon.green {
-        color: #16a34a;
-        background: #dcfce7;
-      }
-
-      .summary-icon.orange {
-        color: #f27911;
-        background: #ffedd5;
-      }
-
-      .summary-content strong {
-        display: block;
-        margin-bottom: 6px;
-        color: var(--text-dark);
-        font-size: 15px;
-      }
-
-      .summary-content span {
-        display: block;
-        color: var(--text-muted);
-        font-size: 12px;
-        line-height: 1.4;
-      }
-
-      .summary-meta {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 38px;
-        height: 34px;
-        padding: 5px 10px;
-        border-radius: 11px;
-        color: #1559d1;
-        background: #e8f0ff;
-        font-size: 15px;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-
-      .summary-meta small {
-        margin-left: 4px;
-        font-size: 11px;
-        font-weight: 800;
-      }
-
-      .summary-note {
-        margin-top: auto;
-        color: var(--text-muted);
-        font-size: 12px;
-      }
-
-      .care-timeline {
-        display: grid;
-      }
-
-      .care-item {
-        position: relative;
-        display: grid;
-        grid-template-columns: 50px minmax(110px, 0.9fr) minmax(130px, 1fr) auto;
-        align-items: center;
-        gap: 14px;
-        min-height: 68px;
-        border-bottom: 1px solid #efe7dc;
-      }
-
-      .care-item:last-child {
-        border-bottom: 0;
-      }
-
-      .care-line {
-        position: absolute;
-        left: 24px;
-        top: 48px;
-        bottom: -22px;
-        width: 2px;
-        background: #eadfce;
-      }
-
-      .care-item:last-child .care-line {
-        display: none;
-      }
-
-      .care-icon {
-        position: relative;
-        z-index: 1;
-        width: 44px;
-        height: 44px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        color: #8a5a18;
-        background: #f7e7cc;
-        font-size: 18px;
-      }
-
-      .care-icon.sand {
-        color: #94601e;
-        background: #f4dfbd;
-      }
-
-      .care-icon.mint {
-        color: #23705d;
-        background: #dcefe6;
-      }
-
-      .care-icon.blue {
-        color: #1559d1;
-        background: #dfe9ff;
-      }
-
-      .care-date strong,
-      .care-main strong {
-        display: block;
-        color: var(--text-dark);
-        font-size: 13px;
-      }
-
-      .care-date span,
-      .care-main span {
-        display: block;
-        margin-top: 4px;
-        color: var(--text-muted);
-        font-size: 12px;
-      }
-
-      .care-pill {
-        min-width: 78px;
-        padding: 4px 9px;
-        border-radius: 999px;
-        color: #8a5a18;
-        background: #f8ead2;
-        text-align: center;
-        font-size: 11px;
-        font-weight: 800;
-      }
-
-      .nearby-placeholder {
-        min-height: 305px;
-      }
-
-      .nearby-card {
-        min-height: 305px;
-      }
-
-      .nearby-body {
-        display: grid;
-        grid-template-columns: 190px minmax(0, 1fr);
-        gap: 14px;
-        align-items: stretch;
-      }
-
-      .mini-visit-calendar {
-        display: block;
-        align-content: start;
-        padding: 12px;
-        border: 1px solid #e8eef7;
-        border-radius: 12px;
-        background: #fbfcff;
-      }
-
-      .mini-calendar-title {
-        margin: 0 0 10px;
-        color: var(--text-dark);
-        font-size: 13px;
-        font-weight: 800;
-      }
-
-      .calendar-widget {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 5px;
-      }
-
-      .calendar-day-name {
-        color: #8b98ad;
-        font-size: 10px;
-        font-weight: 800;
-        text-align: center;
-      }
-
-      .calendar-day {
-        min-height: 26px;
-        display: grid;
-        place-items: center;
-        border-radius: 7px;
-        color: #6b7280;
-        background: #ffffff;
-        font-size: 11px;
-        font-weight: 800;
-      }
-
-      .calendar-day.muted {
-        color: #c2cad8;
-        background: transparent;
-      }
-
-      .calendar-day.has-visit {
-        color: #ffffff;
-        background: #1559d1;
-        box-shadow: 0 8px 16px rgba(21, 89, 209, 0.22);
-      }
-
-      .calendar-caption {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 10px;
-        color: var(--text-muted);
-        font-size: 11px;
-      }
-
-      .calendar-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #1559d1;
-      }
-
-      .nearby-actions {
-        display: flex;
-        gap: 10px;
-      }
-
-      .filter-dropdown {
-        position: relative;
-      }
-
-      .filter-dropdown summary {
-        list-style: none;
-      }
-
-      .filter-dropdown summary::-webkit-details-marker {
-        display: none;
-      }
-
-      .filter-menu {
-        position: absolute;
-        top: calc(100% + 8px);
-        right: 0;
-        z-index: 10;
-        width: 170px;
-        display: grid;
-        gap: 6px;
-        padding: 8px;
-        border: 1px solid var(--border-soft);
-        background: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 14px 32px rgba(13, 30, 57, 0.12);
-      }
-
-      .filter-option {
-        width: 100%;
-        height: 34px;
-        border: 0;
-        border-radius: 8px;
-        color: var(--text-dark);
-        background: transparent;
-        text-align: left;
-        padding: 0 10px;
-        font-size: 13px;
-        font-weight: 700;
-      }
-
-      .filter-option.active,
-      .filter-option:hover {
-        color: #ffffff;
-        background: #1559d1;
-      }
-
-      .nearby-search-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-        margin-bottom: 14px;
-      }
-
-      .nearby-search {
-        height: 36px;
-        padding: 0 12px;
-        border: 1px solid var(--border-soft);
-        border-radius: 9px;
-        color: var(--text-dark);
-        background: #ffffff;
-        font-size: 13px;
-        outline: none;
-      }
-
-      .nearby-search::placeholder {
-        color: #a8b3c5;
-      }
-
-      .filter-button {
-        height: 36px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 0 12px;
-        border: 1px solid var(--border-soft);
-        border-radius: 9px;
-        color: var(--text-dark);
-        background: #ffffff;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .nearby-description {
-        margin: 0 0 18px;
-        color: var(--text-muted);
-        font-size: 14px;
-        line-height: 1.5;
-      }
-
-      .open-map-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 18px;
-        color: #1559d1;
-        text-decoration: none;
-        font-weight: 800;
-      }
-
-      .mini-map {
-        position: relative;
-        min-height: 210px;
-        border-radius: 12px;
-        overflow: hidden;
-        background:
-          linear-gradient(30deg, transparent 0 43%, rgba(255,255,255,.9) 43% 46%, transparent 46%),
-          linear-gradient(112deg, transparent 0 50%, rgba(255,255,255,.85) 50% 52%, transparent 52%),
-          linear-gradient(90deg, transparent 0 76%, rgba(120, 190, 225, .5) 76% 85%, transparent 85%),
-          #e9f1ee;
-      }
-
-      .mini-map::after {
-        content: "POWISLE";
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        color: rgba(69, 84, 110, 0.36);
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.18em;
-        transform: translate(-50%, -50%);
-      }
-
-      .mini-pin {
-        position: absolute;
-        z-index: 2;
-        width: 20px;
-        height: 20px;
-        border-radius: 50% 50% 50% 0;
-        background: #1559d1;
-        transform: rotate(-45deg);
-        box-shadow: 0 8px 16px rgba(21, 89, 209, 0.24);
-      }
-
-      .mini-pin::after {
-        content: "";
-        position: absolute;
-        left: 6px;
-        top: 6px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #ffffff;
-      }
-
-      .mini-pin.one {
-        left: 18%;
-        top: 24%;
-      }
-
-      .mini-pin.two {
-        right: 20%;
-        top: 30%;
-      }
-
-      .mini-pin.three {
-        right: 34%;
-        bottom: 20%;
-      }
-
-      .mini-user-location {
-        position: absolute;
-        left: 48%;
-        top: 50%;
-        z-index: 3;
-        width: 20px;
-        height: 20px;
-        border: 4px solid #ffffff;
-        border-radius: 50%;
-        background: #1559d1;
-        box-shadow: 0 0 0 14px rgba(21, 89, 209, 0.13);
-      }
-
-      @media (max-width: 900px) {
-        .app-layout {
-          display: block;
-        }
-
-        .sidebar {
-          width: 100%;
-          min-height: auto;
-        }
-
-        .main-content {
-          padding: 24px 16px;
-        }
-
-        .dashboard-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .nearby-body {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+    <link rel="stylesheet" href="/static/css/panel_pacjent.css">
   </head>
   <body>
     <div class="app-layout">
@@ -856,9 +46,9 @@
           </a>
           <a class="sidebar-link" href="#">
             <span class="sidebar-icon">
-              <img src="/static/icons/history.svg" alt="" class="sidebar-icon-img">
+              <i class="bi bi-plus-lg sidebar-icon-bi" aria-hidden="true"></i>
             </span>
-            <span>Historia</span>
+            <span>Szybki zapis</span>
           </a>
           <a class="sidebar-link" href="#">
             <span class="sidebar-icon">
@@ -885,9 +75,9 @@
         <nav class="sidebar-nav sidebar-secondary">
           <a class="sidebar-link" href="#">
             <span class="sidebar-icon">
-              <img src="/static/icons/messages.svg" alt="" class="sidebar-icon-img">
+              <img src="/static/icons/history.svg" alt="" class="sidebar-icon-img">
             </span>
-            <span>Wiadomosci</span>
+            <span>Historia</span>
           </a>
           <a class="sidebar-link" href="#">
             <span class="sidebar-icon">
@@ -912,9 +102,9 @@
         <header class="page-header">
           <div>
             <h1 class="page-title">
-              Dzien dobry, {{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}
+              Dzień dobry, {{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}
             </h1>
-            <p class="page-subtitle">Milo Cie widziec. Ponizej znajdziesz podsumowanie.</p>
+            <p class="page-subtitle">Miło Cię widzieć. Poniżej znajdziesz podsumowanie.</p>
           </div>
         </header>
 
@@ -925,35 +115,72 @@
             class="next-visit-bg"
           >
           <div class="next-visit-content">
-            <p class="next-visit-label">Najblizsza wizyta</p>
+            <p class="next-visit-label">Najbliższa wizyta</p>
+            {% if najblizsza_wizyta %}
             <div class="next-visit-date">
-              <strong>15 maja 2025</strong>
-              <span class="day-chip">Czwartek</span>
+              <strong>{{ najblizsza_wizyta["data_czytelna"] }}</strong>
+              <span class="day-chip">{{ najblizsza_wizyta["status"] }}</span>
             </div>
 
             <div class="visit-meta">
               <div class="visit-meta-item">
                 <i class="bi bi-clock" aria-hidden="true"></i>
-                <span>10:30</span>
+                <span>{{ najblizsza_wizyta["godzina"] }}</span>
               </div>
               <div class="visit-meta-item">
                 <i class="bi bi-person" aria-hidden="true"></i>
                 <span class="visit-doctor">
-                  <span>dr Anna Nowak</span>
-                  <small>Kardiolog</small>
+                  <span>{{ najblizsza_wizyta["lekarz"] }}</span>
+                  <small>{{ najblizsza_wizyta["specjalizacja"] }}</small>
                 </span>
               </div>
             </div>
 
             <p class="visit-place">
-              <i class="bi bi-geo-alt me-2" aria-hidden="true"></i>
-              Centrum Medyczne Zdrowie, Warszawa
+              <i class="bi bi-geo-alt" aria-hidden="true"></i>
+              <span>{{ najblizsza_wizyta["lokalizacja"] }}</span>
+              <a class="visit-map-link" href="#mapa-okolicy" aria-label="Pokaż lokalizację na mapie">
+                <i class="bi bi-geo" aria-hidden="true"></i>
+              </a>
             </p>
 
+            <div class="next-visit-footer">
+              <a class="visit-action" href="#">
+                Zobacz szczegóły wizyty
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+              </a>
+              {% if kolejna_wizyta %}
+              <div class="next-visit-followup">
+                <span class="next-visit-followup-label">Następna</span>
+                <div class="next-visit-followup-date">{{ kolejna_wizyta["data"] }}</div>
+                <div>
+                  <strong>{{ kolejna_wizyta["specjalizacja"] }} o {{ kolejna_wizyta["godzina"] }}</strong>
+                  <span>{{ kolejna_wizyta["lekarz"] }}</span>
+                </div>
+              </div>
+              {% else %}
+              <div class="next-visit-followup">
+                <span class="next-visit-followup-label">Następna</span>
+                <div class="next-visit-followup-date">Brak</div>
+                <div>
+                  <strong>Brak kolejnej wizyty</strong>
+                  <span>Po tej wizycie nie ma kolejnego terminu</span>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="next-visit-date">
+              <strong>Brak zaplanowanych wizyt</strong>
+            </div>
+            <p class="visit-place">
+              Gdy umówisz wizytę, jej szczegóły pojawią się w tym miejscu.
+            </p>
             <a class="visit-action" href="#">
-              Zobacz szczegoly wizyty
-              <span aria-hidden="true">→</span>
+              Umów wizytę
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
+            {% endif %}
           </div>
         </section>
 
@@ -961,81 +188,38 @@
           <section class="section-card">
             <div class="section-card-header">
               <h2 class="section-title">Plan opieki</h2>
-              <a class="section-link" href="#">Przejdz do szczegolow <span aria-hidden="true">→</span></a>
+              <a class="section-link" href="#">Przejdź do szczegółów <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
             </div>
 
             <div class="care-timeline">
+              {% for element in plan_opieki %}
               <article class="care-item">
+                {% if not loop.last %}
                 <span class="care-line"></span>
-                <div class="care-icon sand">
-                  <i class="bi bi-clipboard-pulse" aria-hidden="true"></i>
+                {% endif %}
+                <div class="care-icon">
+                  <i class="bi {{ element['ikona'] }}" aria-hidden="true"></i>
                 </div>
                 <div class="care-date">
-                  <strong>20.06.2025</strong>
-                  <span>wazna do</span>
+                  <strong>{{ element["data"] }}</strong>
+                  <span>{{ element["podpis"] }}</span>
                 </div>
                 <div class="care-main">
-                  <strong>Aktywne recepty</strong>
-                  <span>Polocard 75 mg, Metformina 500 mg</span>
+                  <strong>{{ element["tytul"] }}</strong>
+                  <span>{{ element["opis"] }}</span>
                 </div>
-                <span class="care-pill">2 aktywne</span>
+                <span class="care-pill">{{ element["etykieta"] }}</span>
               </article>
-
-              <article class="care-item">
-                <span class="care-line"></span>
-                <div class="care-icon blue">
-                  <i class="bi bi-capsule" aria-hidden="true"></i>
-                </div>
-                <div class="care-date">
-                  <strong>codziennie</strong>
-                  <span>rano</span>
-                </div>
-                <div class="care-main">
-                  <strong>Przypisane leki</strong>
-                  <span>Polocard 75 mg, Metformina 500 mg</span>
-                </div>
-                <span class="care-pill">2 leki</span>
-              </article>
-
-              <article class="care-item">
-                <span class="care-line"></span>
-                <div class="care-icon mint">
-                  <i class="bi bi-journal-medical" aria-hidden="true"></i>
-                </div>
-                <div class="care-date">
-                  <strong>przed wizyta</strong>
-                  <span>zalecenie</span>
-                </div>
-                <div class="care-main">
-                  <strong>Zalecenia lekarza</strong>
-                  <span>Wykonac morfologie krwi</span>
-                </div>
-                <span class="care-pill">2 nowe</span>
-              </article>
-
-              <article class="care-item">
-                <div class="care-icon sand">
-                  <i class="bi bi-activity" aria-hidden="true"></i>
-                </div>
-                <div class="care-date">
-                  <strong>co tydzien</strong>
-                  <span>kontrola</span>
-                </div>
-                <div class="care-main">
-                  <strong>Pomiar cisnienia</strong>
-                  <span>2 razy w tygodniu</span>
-                </div>
-                <span class="care-pill">zadanie</span>
-              </article>
+              {% endfor %}
             </div>
           </section>
 
           <section class="section-card nearby-card">
             <div class="section-card-header">
-              <h2 class="section-title">Znajdz w poblizu</h2>
+              <h2 class="section-title">Znajdź w pobliżu</h2>
             </div>
             <div class="nearby-search-row">
-              <input class="nearby-search" type="search" placeholder="Wyszukaj jednostke, lekarza lub apteke...">
+              <input class="nearby-search" type="search" placeholder="Wyszukaj jednostkę, lekarza lub aptekę...">
               <details class="filter-dropdown">
                 <summary class="filter-button">
                   <i class="bi bi-funnel" aria-hidden="true"></i>
@@ -1051,7 +235,27 @@
 
             <div class="nearby-body">
               <div class="mini-visit-calendar">
-                <p class="mini-calendar-title">Kalendarz wizyt</p>
+                <div class="mini-calendar-header">
+                  <a
+                    class="calendar-nav-button"
+                    href="/panel-pacjenta?rok={{ kalendarz_wizyt['poprzedni_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['poprzedni_miesiac']['miesiac'] }}"
+                    aria-label="Poprzedni miesiąc"
+                  >
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                  </a>
+                  <p class="mini-calendar-title">{{ kalendarz_wizyt["miesiac"] }}</p>
+                  <a
+                    class="calendar-nav-button"
+                    href="/panel-pacjenta?rok={{ kalendarz_wizyt['nastepny_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['nastepny_miesiac']['miesiac'] }}"
+                    aria-label="Następny miesiąc"
+                  >
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                  </a>
+                </div>
+                <div class="calendar-caption">
+                  <span class="calendar-dot"></span>
+                  {{ kalendarz_wizyt["podpis"] }}
+                </div>
                 <div class="calendar-widget" aria-label="Mini kalendarz wizyt">
                   <span class="calendar-day-name">Pn</span>
                   <span class="calendar-day-name">Wt</span>
@@ -1061,38 +265,11 @@
                   <span class="calendar-day-name">So</span>
                   <span class="calendar-day-name">Nd</span>
 
-                  <span class="calendar-day muted">28</span>
-                  <span class="calendar-day muted">29</span>
-                  <span class="calendar-day muted">30</span>
-                  <span class="calendar-day">1</span>
-                  <span class="calendar-day">2</span>
-                  <span class="calendar-day">3</span>
-                  <span class="calendar-day">4</span>
-                  <span class="calendar-day">5</span>
-                  <span class="calendar-day">6</span>
-                  <span class="calendar-day">7</span>
-                  <span class="calendar-day">8</span>
-                  <span class="calendar-day">9</span>
-                  <span class="calendar-day">10</span>
-                  <span class="calendar-day">11</span>
-                  <span class="calendar-day">12</span>
-                  <span class="calendar-day">13</span>
-                  <span class="calendar-day">14</span>
-                  <span class="calendar-day has-visit">15</span>
-                  <span class="calendar-day">16</span>
-                  <span class="calendar-day">17</span>
-                  <span class="calendar-day">18</span>
-                  <span class="calendar-day">19</span>
-                  <span class="calendar-day">20</span>
-                  <span class="calendar-day">21</span>
-                  <span class="calendar-day">22</span>
-                  <span class="calendar-day">23</span>
-                  <span class="calendar-day">24</span>
-                  <span class="calendar-day">25</span>
-                </div>
-                <div class="calendar-caption">
-                  <span class="calendar-dot"></span>
-                  15 maja, 10:30 - Kardiolog
+                  {% for dzien in kalendarz_wizyt["dni"] %}
+                  <span class="calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['ma_wizyte'] %} has-visit{% endif %}">
+                    {{ dzien["numer"] }}
+                  </span>
+                  {% endfor %}
                 </div>
               </div>
 
