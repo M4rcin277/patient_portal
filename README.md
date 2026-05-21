@@ -21,7 +21,6 @@ Celem projektu jest stworzenie systemu umożliwiającego:
 - PostgreSQL w późniejszym etapie
 - MongoDB w późniejszym etapie
 - Docker w późniejszym etapie
-- GitHub, branche i Pull Requesty
 
 ---
 
