@@ -143,12 +143,29 @@ apteki = [
 historia_medyczna = [
     {
         "data": "2026-03-12",
+        "lekarz": "Anna Kowalska",
+        "typ": "Badanie",
         "tytul": "Badanie kontrolne",
         "opis": "Omówienie wyników morfologii krwi.",
+        "etykieta": "wyniki omówione",
+        "ikona": "bi-clipboard2-pulse",
     },
     {
         "data": "2026-02-02",
+        "lekarz": "Piotr Nowak",
+        "typ": "Konsultacja",
         "tytul": "Konsultacja kardiologiczna",
         "opis": "Zalecenie regularnego pomiaru ciśnienia.",
+        "etykieta": "zalecenia",
+        "ikona": "bi-heart-pulse",
+    },
+    {
+        "data": "2026-01-15",
+        "lekarz": "Marta Wiśniewska",
+        "typ": "Wizyta",
+        "tytul": "Wizyta internistyczna",
+        "opis": "Kontrola samopoczucia i aktualizacja planu leczenia.",
+        "etykieta": "kontrola",
+        "ikona": "bi-journal-medical",
     },
 ]

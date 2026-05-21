@@ -49,6 +49,19 @@ def formatuj_date_po_polsku(data_tekstem: str):
     return f"{data.day} {miesiac} {data.year}"
 
 
+def przygotuj_historie_medyczna(historia_medyczna):
+    wpisy = []
+
+    for wpis in historia_medyczna:
+        przygotowany_wpis = wpis.copy()
+        data_wpisu = date.fromisoformat(wpis["data"])
+        przygotowany_wpis["data_czytelna"] = formatuj_date_po_polsku(wpis["data"])
+        przygotowany_wpis["data_krotka"] = data_wpisu.strftime("%d.%m.%Y")
+        wpisy.append(przygotowany_wpis)
+
+    return sorted(wpisy, key=lambda wpis: wpis["data"], reverse=True)
+
+
 def znajdz_pacjenta(pacjent_id: int):
     for pacjent in pacjenci:
         if pacjent["id"] == pacjent_id:

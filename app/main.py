@@ -15,6 +15,7 @@ from app.pomocnicy import (
     pobierz_wolne_godziny,
     pobierz_nadchodzace_wizyty,
     pobierz_wizyty_pacjenta,
+    przygotuj_historie_medyczna,
     przygotuj_kalendarz_wizyt,
     termin_jest_zajety,
     znajdz_najblizsza_wizyte,
@@ -165,6 +166,7 @@ def widok_apteki(request: Request):
 def widok_historia(request: Request):
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id)
+    wpisy_historii = przygotuj_historie_medyczna(historia_medyczna)[:3]
 
     return templates.TemplateResponse(
         request,
@@ -172,7 +174,7 @@ def widok_historia(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "historia",
-            "historia_medyczna": historia_medyczna,
+            "historia_medyczna": wpisy_historii,
         },
     )
 

@@ -7,7 +7,7 @@ Celem projektu jest stworzenie systemu umożliwiającego:
 - podgląd profilu pacjenta,
 - obsługę panelu pacjenta,
 - wyszukiwanie lekarzy i aptek,
-- późniejszą obsługę historii medycznej i recept.
+- obsługę historii medycznej i recept.
 
 ---
 
@@ -27,7 +27,7 @@ Celem projektu jest stworzenie systemu umożliwiającego:
 
 ## Aktualny etap projektu
 
-Projekt ma już podstawowy backend FastAPI oraz pierwszy widok panelu pacjenta renderowany przez Jinja2.
+Projekt ma podstawowy backend FastAPI, wspólny layout Jinja2 oraz kilka widoków pacjenta renderowanych po stronie serwera.
 
 Aktualnie dostępne są między innymi:
 - endpoint statusu aplikacji,
@@ -39,7 +39,11 @@ Aktualnie dostępne są między innymi:
 - endpoint wolnych terminów lekarza,
 - profil aktualnego pacjenta,
 - wizyty aktualnego pacjenta,
-- panel pacjenta pod adresem `/panel-pacjenta`.
+- panel pacjenta z podsumowaniem wizyt,
+- widok moich wizyt z kalendarzem,
+- widok szybkiego zapisu z filtrowaniem po specjalizacji i mieście,
+- widok historii medycznej jako stos 3 najnowszych wpisów,
+- widoki recept, lekarzy, aptek i ustawień.
 
 Na tym etapie dane są przechowywane tymczasowo w listach Pythonowych. W kolejnych etapach zostaną przeniesione do bazy danych.
 
@@ -75,6 +79,14 @@ Panel pacjenta:
 http://127.0.0.1:8000/panel-pacjenta
 ```
 
+Najważniejsze widoki pacjenta:
+
+```text
+http://127.0.0.1:8000/moje-wizyty
+http://127.0.0.1:8000/szybki-zapis
+http://127.0.0.1:8000/historia
+```
+
 Dokumentacja API:
 
 ```text
@@ -89,8 +101,11 @@ http://127.0.0.1:8000/docs
 - Role: pacjent i lekarz
 - Panel lekarza
 - Umawianie wizyt z poziomu widoku HTML
-- Historia medyczna
-- Recepty
+- Pełna lista archiwalnych wpisów historii medycznej
+- Podpięcie szybkiego zapisu pod backend
+- Komunikaty sukcesu i błędów po zapisie wizyty
+- Lepsza walidacja dat i godzin wizyt
+- Rozbudowa recept
 - Wyszukiwarka lekarzy
 - Mapa aptek i placówek medycznych
 - Integracja z PostgreSQL
@@ -103,4 +118,4 @@ http://127.0.0.1:8000/docs
 
 ## Status projektu
 
-Projekt jest rozwijany etapami. Obecny etap skupia się na uporządkowaniu dashboardu pacjenta, podstawowej logice wizyt i dobrych praktykach pracy z Git oraz Pull Requestami.
+Projekt jest rozwijany etapami. Obecny etap skupia się na dopracowaniu widoków pacjenta, utrzymaniu prostego backendu, porządkowaniu logiki w helperach oraz dobrych praktykach pracy z Git i Pull Requestami.
