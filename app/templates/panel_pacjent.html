@@ -1,288 +1,219 @@
-<!doctype html>
-<html lang="pl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Panel pacjenta</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    >
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-      rel="stylesheet"
-    >
-    <link rel="icon" type="image/png" href="/static/icons/favicon.png">
-    <link rel="stylesheet" href="/static/css/panel_pacjent.css">
-  </head>
-  <body>
-    <div class="app-layout">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-mark">
-            <img
-              src="/static/icons/HospHeart.png"
-              alt="Portal Pacjenta"
-              class="brand-logo"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-            >
-            <span class="brand-fallback">P</span>
-          </div>
-          <p class="brand-title">Portal<br>Pacjenta</p>
-        </div>
+{% extends "base.html" %}
 
-        <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="#">
-            <span class="sidebar-icon">
-              <img src="/static/icons/dashboard.svg" alt="" class="sidebar-icon-img">
-            </span>
-            <span>Dashboard</span>
-          </a>
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <img src="/static/icons/visits.svg" alt="" class="sidebar-icon-img">
-            </span>
-            <span>Wizyty</span>
-          </a>
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <i class="bi bi-plus-lg sidebar-icon-bi" aria-hidden="true"></i>
-            </span>
-            <span>Szybki zapis</span>
-          </a>
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <i class="bi bi-clipboard-pulse sidebar-icon-bi" aria-hidden="true"></i>
-            </span>
-            <span>Recepty</span>
-          </a>
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <img src="/static/icons/doctors.svg" alt="" class="sidebar-icon-img">
-            </span>
-            <span>Lekarze</span>
-          </a>
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <img src="/static/icons/pharmacies.svg" alt="" class="sidebar-icon-img">
-            </span>
-            <span>Apteki</span>
-          </a>
-        </nav>
+{% block title %}Panel pacjenta{% endblock %}
 
-        <div class="sidebar-divider"></div>
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">
+      Dzień dobry, {{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}
+    </h1>
+    <p class="page-subtitle">Miło Cię widzieć. Poniżej znajdziesz podsumowanie.</p>
+  </div>
+</header>
 
-        <nav class="sidebar-nav sidebar-secondary">
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <img src="/static/icons/history.svg" alt="" class="sidebar-icon-img">
-            </span>
-            <span>Historia</span>
-          </a>
-          <a class="sidebar-link" href="#">
-            <span class="sidebar-icon">
-              <i class="bi bi-gear-wide-connected sidebar-icon-bi" aria-hidden="true"></i>
-            </span>
-            <span>Ustawienia</span>
-          </a>
-        </nav>
-
-        <div class="sidebar-profile">
-          <div class="profile-avatar">
-            {{ pacjent["imie"][0] }}{{ pacjent["nazwisko"][0] }}
-          </div>
-          <div>
-            <p class="profile-name">{{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}</p>
-            <p class="profile-role">Pacjent</p>
-          </div>
-        </div>
-      </aside>
-
-      <main class="main-content">
-        <header class="page-header">
-          <div>
-            <h1 class="page-title">
-              Dzień dobry, {{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}
-            </h1>
-            <p class="page-subtitle">Miło Cię widzieć. Poniżej znajdziesz podsumowanie.</p>
-          </div>
-        </header>
-
-        <section class="next-visit-card">
-          <img
-            src="/static/icons/backGroundDash.png?v=2"
-            alt=""
-            class="next-visit-bg"
-          >
-          <div class="next-visit-content">
-            <p class="next-visit-label">Najbliższa wizyta</p>
-            {% if najblizsza_wizyta %}
-            <div class="next-visit-date">
-              <strong>{{ najblizsza_wizyta["data_czytelna"] }}</strong>
-              <span class="day-chip">{{ najblizsza_wizyta["status"] }}</span>
-            </div>
-
-            <div class="visit-meta">
-              <div class="visit-meta-item">
-                <i class="bi bi-clock" aria-hidden="true"></i>
-                <span>{{ najblizsza_wizyta["godzina"] }}</span>
-              </div>
-              <div class="visit-meta-item">
-                <i class="bi bi-person" aria-hidden="true"></i>
-                <span class="visit-doctor">
-                  <span>{{ najblizsza_wizyta["lekarz"] }}</span>
-                  <small>{{ najblizsza_wizyta["specjalizacja"] }}</small>
-                </span>
-              </div>
-            </div>
-
-            <p class="visit-place">
-              <i class="bi bi-geo-alt" aria-hidden="true"></i>
-              <span>{{ najblizsza_wizyta["lokalizacja"] }}</span>
-              <a class="visit-map-link" href="#mapa-okolicy" aria-label="Pokaż lokalizację na mapie">
-                <i class="bi bi-geo" aria-hidden="true"></i>
-              </a>
-            </p>
-
-            <div class="next-visit-footer">
-              <a class="visit-action" href="#">
-                Zobacz szczegóły wizyty
-                <i class="bi bi-arrow-right" aria-hidden="true"></i>
-              </a>
-              {% if kolejna_wizyta %}
-              <div class="next-visit-followup">
-                <span class="next-visit-followup-label">Następna</span>
-                <div class="next-visit-followup-date">{{ kolejna_wizyta["data"] }}</div>
-                <div>
-                  <strong>{{ kolejna_wizyta["specjalizacja"] }} o {{ kolejna_wizyta["godzina"] }}</strong>
-                  <span>{{ kolejna_wizyta["lekarz"] }}</span>
-                </div>
-              </div>
-              {% else %}
-              <div class="next-visit-followup">
-                <span class="next-visit-followup-label">Następna</span>
-                <div class="next-visit-followup-date">Brak</div>
-                <div>
-                  <strong>Brak kolejnej wizyty</strong>
-                  <span>Po tej wizycie nie ma kolejnego terminu</span>
-                </div>
-              </div>
-              {% endif %}
-            </div>
-            {% else %}
-            <div class="next-visit-date">
-              <strong>Brak zaplanowanych wizyt</strong>
-            </div>
-            <p class="visit-place">
-              Gdy umówisz wizytę, jej szczegóły pojawią się w tym miejscu.
-            </p>
-            <a class="visit-action" href="#">
-              Umów wizytę
-              <i class="bi bi-arrow-right" aria-hidden="true"></i>
-            </a>
-            {% endif %}
-          </div>
-        </section>
-
-        <div class="dashboard-grid">
-          <section class="section-card">
-            <div class="section-card-header">
-              <h2 class="section-title">Plan opieki</h2>
-              <a class="section-link" href="#">Przejdź do szczegółów <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-            </div>
-
-            <div class="care-timeline">
-              {% for element in plan_opieki %}
-              <article class="care-item">
-                {% if not loop.last %}
-                <span class="care-line"></span>
-                {% endif %}
-                <div class="care-icon">
-                  <i class="bi {{ element['ikona'] }}" aria-hidden="true"></i>
-                </div>
-                <div class="care-date">
-                  <strong>{{ element["data"] }}</strong>
-                  <span>{{ element["podpis"] }}</span>
-                </div>
-                <div class="care-main">
-                  <strong>{{ element["tytul"] }}</strong>
-                  <span>{{ element["opis"] }}</span>
-                </div>
-                <span class="care-pill">{{ element["etykieta"] }}</span>
-              </article>
-              {% endfor %}
-            </div>
-          </section>
-
-          <section class="section-card nearby-card">
-            <div class="section-card-header">
-              <h2 class="section-title">Znajdź w pobliżu</h2>
-            </div>
-            <div class="nearby-search-row">
-              <input class="nearby-search" type="search" placeholder="Wyszukaj jednostkę, lekarza lub aptekę...">
-              <details class="filter-dropdown">
-                <summary class="filter-button">
-                  <i class="bi bi-funnel" aria-hidden="true"></i>
-                  Filtry
-                </summary>
-                <div class="filter-menu">
-                  <button class="filter-option active" type="button">Apteki</button>
-                  <button class="filter-option" type="button">Lekarze</button>
-                  <button class="filter-option" type="button">Szpitale</button>
-                </div>
-              </details>
-            </div>
-
-            <div class="nearby-body">
-              <div class="mini-visit-calendar">
-                <div class="mini-calendar-header">
-                  <a
-                    class="calendar-nav-button"
-                    href="/panel-pacjenta?rok={{ kalendarz_wizyt['poprzedni_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['poprzedni_miesiac']['miesiac'] }}"
-                    aria-label="Poprzedni miesiąc"
-                  >
-                    <i class="bi bi-chevron-left" aria-hidden="true"></i>
-                  </a>
-                  <p class="mini-calendar-title">{{ kalendarz_wizyt["miesiac"] }}</p>
-                  <a
-                    class="calendar-nav-button"
-                    href="/panel-pacjenta?rok={{ kalendarz_wizyt['nastepny_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['nastepny_miesiac']['miesiac'] }}"
-                    aria-label="Następny miesiąc"
-                  >
-                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                  </a>
-                </div>
-                <div class="calendar-caption">
-                  <span class="calendar-dot"></span>
-                  {{ kalendarz_wizyt["podpis"] }}
-                </div>
-                <div class="calendar-widget" aria-label="Mini kalendarz wizyt">
-                  <span class="calendar-day-name">Pn</span>
-                  <span class="calendar-day-name">Wt</span>
-                  <span class="calendar-day-name">Sr</span>
-                  <span class="calendar-day-name">Cz</span>
-                  <span class="calendar-day-name">Pt</span>
-                  <span class="calendar-day-name">So</span>
-                  <span class="calendar-day-name">Nd</span>
-
-                  {% for dzien in kalendarz_wizyt["dni"] %}
-                  <span class="calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['ma_wizyte'] %} has-visit{% endif %}">
-                    {{ dzien["numer"] }}
-                  </span>
-                  {% endfor %}
-                </div>
-              </div>
-
-              <div class="mini-map" aria-label="Podglad mapy okolicy">
-                <span class="mini-pin one"></span>
-                <span class="mini-pin two"></span>
-                <span class="mini-pin three"></span>
-                <span class="mini-user-location"></span>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
+<section class="next-visit-card">
+  <img
+    src="/static/icons/backGroundDash.png?v=2"
+    alt=""
+    class="next-visit-bg"
+  >
+  <div class="next-visit-content">
+    <p class="next-visit-label">Najbliższa wizyta</p>
+    {% if najblizsza_wizyta %}
+    <div class="next-visit-date">
+      <strong>{{ najblizsza_wizyta["data_czytelna"] }}</strong>
+      <span class="day-chip">{{ najblizsza_wizyta["status"] }}</span>
     </div>
-  </body>
-</html>
+
+    <div class="visit-meta">
+      <div class="visit-meta-item">
+        <i class="bi bi-clock" aria-hidden="true"></i>
+        <span>{{ najblizsza_wizyta["godzina"] }}</span>
+      </div>
+      <div class="visit-meta-item">
+        <i class="bi bi-person" aria-hidden="true"></i>
+        <span class="visit-doctor">
+          <span>{{ najblizsza_wizyta["lekarz"] }}</span>
+          <small>{{ najblizsza_wizyta["specjalizacja"] }}</small>
+        </span>
+      </div>
+    </div>
+
+    <p class="visit-place">
+      <i class="bi bi-geo-alt" aria-hidden="true"></i>
+      <span>{{ najblizsza_wizyta["lokalizacja"] }}</span>
+      <a class="visit-map-link" href="#mapa-okolicy" aria-label="Pokaż lokalizację na mapie" data-app-message="Mapa w tym miejscu jest jeszcze makietą. Później podepniemy lokalizację placówki.">
+        <i class="bi bi-geo" aria-hidden="true"></i>
+      </a>
+    </p>
+
+    <div class="next-visit-footer">
+      <a class="visit-action" href="/moje-wizyty">
+        Zobacz szczegóły wizyty
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
+      {% if kolejna_wizyta %}
+      <div class="next-visit-followup">
+        <span class="next-visit-followup-label">Następna</span>
+        <div class="next-visit-followup-date">{{ kolejna_wizyta["data"] }}</div>
+        <div>
+          <strong>{{ kolejna_wizyta["specjalizacja"] }} o {{ kolejna_wizyta["godzina"] }}</strong>
+          <span>{{ kolejna_wizyta["lekarz"] }}</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="next-visit-followup">
+        <span class="next-visit-followup-label">Następna</span>
+        <div class="next-visit-followup-date">Brak</div>
+        <div>
+          <strong>Brak kolejnej wizyty</strong>
+          <span>Po tej wizycie nie ma kolejnego terminu</span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="next-visit-date">
+      <strong>Brak zaplanowanych wizyt</strong>
+    </div>
+    <p class="visit-place">
+      Gdy umówisz wizytę, jej szczegóły pojawią się w tym miejscu.
+    </p>
+    <a class="visit-action" href="/szybki-zapis">
+      Umów wizytę
+      <i class="bi bi-arrow-right" aria-hidden="true"></i>
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<div class="dashboard-grid">
+  <section class="section-card">
+    <div class="section-card-header">
+      <h2 class="section-title">Plan opieki</h2>
+      <a class="section-link" href="/recepty">Przejdź do szczegółów <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    </div>
+
+    <div class="care-timeline">
+      {% for element in plan_opieki %}
+      <article class="care-item">
+        {% if not loop.last %}
+        <span class="care-line"></span>
+        {% endif %}
+        <div class="care-icon">
+          <i class="bi {{ element['ikona'] }}" aria-hidden="true"></i>
+        </div>
+        <div class="care-date">
+          <strong>{{ element["data"] }}</strong>
+          <span>{{ element["podpis"] }}</span>
+        </div>
+        <div class="care-main">
+          <strong>{{ element["tytul"] }}</strong>
+          <span>{{ element["opis"] }}</span>
+        </div>
+        <span class="care-pill">{{ element["etykieta"] }}</span>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section-card nearby-card">
+    <div class="section-card-header">
+      <h2 class="section-title">Znajdź w pobliżu</h2>
+    </div>
+    <div class="nearby-search-row">
+      <input class="nearby-search" type="search" placeholder="Wyszukaj jednostkę, lekarza lub aptekę...">
+      <details class="filter-dropdown">
+        <summary class="filter-button">
+          <i class="bi bi-funnel" aria-hidden="true"></i>
+          Filtry
+        </summary>
+        <div class="filter-menu">
+          <button class="filter-option active" type="button" data-nearby-filter>Apteki</button>
+          <button class="filter-option" type="button" data-nearby-filter>Lekarze</button>
+          <button class="filter-option" type="button" data-nearby-filter>Szpitale</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="nearby-body">
+      <div class="mini-visit-calendar">
+        <div class="mini-calendar-header">
+          <a
+            class="calendar-nav-button"
+            href="/panel-pacjenta?rok={{ kalendarz_wizyt['poprzedni_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['poprzedni_miesiac']['miesiac'] }}"
+            aria-label="Poprzedni miesiąc"
+          >
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+          </a>
+          <p class="mini-calendar-title">{{ kalendarz_wizyt["miesiac"] }}</p>
+          <a
+            class="calendar-nav-button"
+            href="/panel-pacjenta?rok={{ kalendarz_wizyt['nastepny_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['nastepny_miesiac']['miesiac'] }}"
+            aria-label="Następny miesiąc"
+          >
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+        </div>
+        <div class="calendar-caption">
+          <span class="calendar-dot"></span>
+          {{ kalendarz_wizyt["podpis"] }}
+        </div>
+        <div class="calendar-widget" aria-label="Mini kalendarz wizyt">
+          <span class="calendar-day-name">Pn</span>
+          <span class="calendar-day-name">Wt</span>
+          <span class="calendar-day-name">Sr</span>
+          <span class="calendar-day-name">Cz</span>
+          <span class="calendar-day-name">Pt</span>
+          <span class="calendar-day-name">So</span>
+          <span class="calendar-day-name">Nd</span>
+
+          {% for dzien in kalendarz_wizyt["dni"] %}
+          <span class="calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['ma_wizyte'] %} has-visit{% endif %}">
+            {{ dzien["numer"] }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mini-map" aria-label="Podgląd mapy okolicy">
+        <span class="mini-pin one"></span>
+        <span class="mini-pin two"></span>
+        <span class="mini-pin three"></span>
+        <span class="mini-user-location"></span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="dashboard-summary-strip" aria-label="Podsumowanie pacjenta">
+  {% for pozycja in podsumowanie_panelu %}
+  <article class="dashboard-summary-item">
+    <span class="dashboard-summary-icon">
+      <i class="bi {{ pozycja['ikona'] }}" aria-hidden="true"></i>
+    </span>
+    <div>
+      <strong>{{ pozycja["wartosc"] }}</strong>
+      <span>{{ pozycja["tytul"] }}</span>
+      <small>{{ pozycja["opis"] }}</small>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-nearby-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-nearby-filter]").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      window.showAppToast?.(`Widok mapy przełączony na: ${button.textContent.trim()}.`);
+    });
+  });
+</script>
+{% endblock %}

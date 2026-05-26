@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Historia{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Historia</h1>
+    <p class="page-subtitle">Przegląd wizyt, badań i zaleceń zapisanych w dokumentacji pacjenta.</p>
+  </div>
+</header>
+
+<section class="history-folder-stack" aria-label="Historia medyczna pacjenta">
+  <div class="history-folder-tabs" role="tablist" aria-label="Wpisy historii medycznej">
+    {% for wpis in historia_medyczna %}
+    <button
+      class="history-folder-tab {% if loop.first %}active{% endif %}"
+      type="button"
+      role="tab"
+      aria-selected="{% if loop.first %}true{% else %}false{% endif %}"
+      aria-controls="history-panel-{{ loop.index }}"
+      id="history-tab-{{ loop.index }}"
+      data-history-tab="{{ loop.index }}"
+      tabindex="{% if loop.first %}0{% else %}-1{% endif %}"
+    >
+      <span>
+        <i class="bi bi-calendar2-week" aria-hidden="true"></i>
+        {{ wpis["data_krotka"] }}
+      </span>
+      <strong>{{ wpis["lekarz"] }}</strong>
+    </button>
+    {% endfor %}
+  </div>
+
+  <div class="history-folder-panels">
+    {% for wpis in historia_medyczna %}
+    <article
+      class="history-folder-panel {% if loop.first %}active{% endif %}"
+      id="history-panel-{{ loop.index }}"
+      role="tabpanel"
+      aria-labelledby="history-tab-{{ loop.index }}"
+      data-history-panel="{{ loop.index }}"
+      {% if not loop.first %}hidden{% endif %}
+    >
+      <div class="history-folder-body">
+        <div class="history-icon">
+          <i class="bi {{ wpis['ikona'] }}" aria-hidden="true"></i>
+        </div>
+        <div class="history-entry-copy">
+          <strong>{{ wpis["tytul"] }}</strong>
+          <p>{{ wpis["opis"] }}</p>
+          <span>{{ wpis["etykieta"] }}</span>
+        </div>
+        <div class="history-watermark" aria-hidden="true">
+          <i class="bi bi-shield-plus"></i>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const historyTabsContainer = document.querySelector(".history-folder-tabs");
+  const historyTabs = document.querySelectorAll("[data-history-tab]");
+  const historyPanels = document.querySelectorAll("[data-history-panel]");
+
+  historyTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const selectedId = tab.dataset.historyTab;
+
+      historyTabsContainer.prepend(tab);
+
+      historyTabs.forEach((item) => {
+        const isActive = item === tab;
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-selected", String(isActive));
+        item.setAttribute("tabindex", isActive ? "0" : "-1");
+      });
+
+      historyPanels.forEach((panel) => {
+        const isActive = panel.dataset.historyPanel === selectedId;
+        panel.classList.toggle("active", isActive);
+        panel.hidden = !isActive;
+      });
+    });
+  });
+</script>
+{% endblock %}

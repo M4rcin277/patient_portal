@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Leki{% endblock %}
+
+{% block content %}
+<header class="page-header medicines-page-header">
+  <div>
+    <h1 class="page-title">Leki</h1>
+    <p class="page-subtitle">Zarządzaj lekami, dawkowaniem i przypomnieniami w jednym miejscu.</p>
+  </div>
+  <button class="secondary-action-button" type="button" data-app-message="Ta sekcja pokazuje leki, harmonogram dawek, przypomnienia i notatkę pacjenta.">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    Jak to działa?
+  </button>
+</header>
+
+<section class="medicines-hero section-card">
+  <div>
+    <span class="section-kicker">Plan leczenia</span>
+    <h2>Dzisiejszy harmonogram leków</h2>
+    <p>Najważniejsze dawki są uporządkowane według pory dnia, żeby łatwo sprawdzić co i kiedy przyjąć.</p>
+  </div>
+  <div class="medicines-hero-stat">
+    <strong>{{ leki_pacjenta|length }}</strong>
+    <span>aktywne leki</span>
+  </div>
+</section>
+
+<section class="medicines-layout">
+  <div class="medicines-main-column">
+    <section class="section-card active-medicines-card">
+      <div class="section-card-header">
+        <div>
+          <h2 class="section-title">Moje leki</h2>
+          <p class="section-subtitle">Aktywne leki przypisane do Twojego planu leczenia.</p>
+        </div>
+        <button class="secondary-action-button" type="button" data-app-message="Dodawanie własnego leku podepniemy po przygotowaniu formularza i walidacji.">
+          <i class="bi bi-plus-lg" aria-hidden="true"></i>
+          Dodaj lek
+        </button>
+      </div>
+
+      <div class="medicine-list">
+        {% for lek in leki_pacjenta %}
+        <article class="medicine-row medicine-row-{{ lek['kolor'] }}">
+          <div class="medicine-icon">
+            <i class="bi {{ lek['ikona'] }}" aria-hidden="true"></i>
+          </div>
+          <div class="medicine-main">
+            <div class="medicine-title-line">
+              <h3>{{ lek["nazwa"] }}</h3>
+              <span>{{ lek["status"] }}</span>
+            </div>
+            <p>{{ lek["substancja"] }}</p>
+            <div class="medicine-details">
+              <span><i class="bi bi-clock" aria-hidden="true"></i>{{ lek["dawkowanie"] }}</span>
+              <span><i class="bi bi-person-vcard" aria-hidden="true"></i>lek. {{ lek["lekarz"] }}</span>
+              <span><i class="bi bi-calendar-check" aria-hidden="true"></i>do {{ lek["do_kiedy"] }}</span>
+            </div>
+            <small>{{ lek["zalecenie"] }}</small>
+          </div>
+          <button class="medicine-row-action" type="button" aria-label="Szczegóły leku {{ lek['nazwa'] }}" data-app-message="{{ lek['nazwa'] }}: {{ lek['dawkowanie'] }}. {{ lek['zalecenie'] }}">
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </button>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="section-card medicine-note-card">
+      <div>
+        <h2 class="section-title"><i class="bi bi-journal-text" aria-hidden="true"></i> Twoja notatka o lekach</h2>
+        <p class="section-subtitle">Zapisz krótkie informacje o przyjmowaniu leków, tolerancji albo pytania do lekarza.</p>
+      </div>
+      <div class="medicine-note-preview" data-medicine-note>
+        Po południu brać po posiłku. Sprawdzić, czy nie koliduje z innymi lekami.
+        <span>74/300</span>
+      </div>
+      <button class="medicine-edit-note" type="button" data-medicine-edit-note>
+        <i class="bi bi-pencil" aria-hidden="true"></i>
+        Edytuj notatkę
+      </button>
+    </section>
+  </div>
+
+  <aside class="medicines-side-column">
+    <section class="section-card medicine-schedule-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Dzisiejszy harmonogram</h2>
+        <span class="small-status-pill">Dzisiaj</span>
+      </div>
+      <div class="medicine-schedule-list">
+        {% for dawka in harmonogram_lekow %}
+        <article class="medicine-schedule-item">
+          <div class="schedule-time">
+            <strong>{{ dawka["godzina"] }}</strong>
+            <span>{{ dawka["pora"] }}</span>
+          </div>
+          <div>
+            <h3>{{ dawka["leki"] }}</h3>
+            <p>{{ dawka["status"] }}</p>
+          </div>
+          <button type="button" aria-label="Oznacz dawkę jako przyjętą" data-medicine-dose>
+            <i class="bi bi-check2" aria-hidden="true"></i>
+          </button>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="section-card medicine-reminders-card">
+      <div class="section-card-header">
+        <div>
+          <h2 class="section-title">Przypomnienia o lekach</h2>
+          <p class="section-subtitle">Włącz lub wyłącz lokalne przypomnienia.</p>
+        </div>
+      </div>
+      <div class="medicine-reminder-list">
+        {% for lek in leki_pacjenta %}
+        <label class="medicine-reminder-row">
+          <span>
+            <strong>{{ lek["nazwa"] }}</strong>
+            <small>{{ lek["dawkowanie"] }}</small>
+          </span>
+          <span class="medicine-reminder-switch">
+            <input type="checkbox" checked>
+            <span aria-hidden="true"></span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      <button class="medicine-reminders-button" type="button" data-app-message="Przypomnienia działają lokalnie w widoku. Backend zapamięta je później dla użytkownika.">
+        Zarządzaj przypomnieniami
+      </button>
+    </section>
+  </aside>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelector("[data-medicine-edit-note]")?.addEventListener("click", () => {
+    const note = document.querySelector("[data-medicine-note]");
+
+    if (!note || note.querySelector("textarea")) {
+      return;
+    }
+
+    const currentText = note.childNodes[0].textContent.trim();
+    note.innerHTML = `
+      <textarea maxlength="300">${currentText}</textarea>
+      <span>${currentText.length}/300</span>
+    `;
+
+    const textarea = note.querySelector("textarea");
+    const counter = note.querySelector("span");
+    textarea.focus();
+
+    textarea.addEventListener("input", () => {
+      counter.textContent = `${textarea.value.length}/300`;
+    });
+  });
+
+  document.querySelectorAll("[data-medicine-dose]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = button.closest(".medicine-schedule-item");
+      item?.classList.toggle("taken");
+
+      const isTaken = item?.classList.contains("taken");
+      button.innerHTML = isTaken
+        ? '<i class="bi bi-check2-all" aria-hidden="true"></i>'
+        : '<i class="bi bi-check2" aria-hidden="true"></i>';
+
+      window.showAppToast?.(isTaken ? "Dawka oznaczona jako przyjęta." : "Cofnięto oznaczenie dawki.");
+    });
+  });
+</script>
+{% endblock %}

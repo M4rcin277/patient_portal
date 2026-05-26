@@ -34,6 +34,21 @@ POLSKIE_MIESIACE_NAGLOWEK = [
     "Grudzień",
 ]
 
+POLSKIE_MIESIACE_SKROT = [
+    "STY",
+    "LUT",
+    "MAR",
+    "KWI",
+    "MAJ",
+    "CZE",
+    "LIP",
+    "SIE",
+    "WRZ",
+    "PAZ",
+    "LIS",
+    "GRU",
+]
+
 
 def zamien_wizyte_na_datetime(wizyta):
     return datetime.strptime(
@@ -47,6 +62,19 @@ def formatuj_date_po_polsku(data_tekstem: str):
     miesiac = POLSKIE_MIESIACE[data.month - 1]
 
     return f"{data.day} {miesiac} {data.year}"
+
+
+def przygotuj_historie_medyczna(historia_medyczna):
+    wpisy = []
+
+    for wpis in historia_medyczna:
+        przygotowany_wpis = wpis.copy()
+        data_wpisu = date.fromisoformat(wpis["data"])
+        przygotowany_wpis["data_czytelna"] = formatuj_date_po_polsku(wpis["data"])
+        przygotowany_wpis["data_krotka"] = data_wpisu.strftime("%d.%m.%Y")
+        wpisy.append(przygotowany_wpis)
+
+    return sorted(wpisy, key=lambda wpis: wpis["data"], reverse=True)
 
 
 def znajdz_pacjenta(pacjent_id: int):
@@ -67,6 +95,7 @@ def znajdz_lekarza(lekarz_id: int):
 
 def przygotuj_wizyte_dla_pacjenta(wizyta):
     lekarz = znajdz_lekarza(wizyta["lekarz_id"])
+    data_wizyty = date.fromisoformat(wizyta["data"])
 
     return {
         "id": wizyta["id"],
@@ -75,6 +104,9 @@ def przygotuj_wizyte_dla_pacjenta(wizyta):
         "lokalizacja": lekarz["lokalizacja"],
         "data": wizyta["data"],
         "data_czytelna": formatuj_date_po_polsku(wizyta["data"]),
+        "data_dzien": f"{data_wizyty.day:02d}",
+        "data_miesiac_skrot": POLSKIE_MIESIACE_SKROT[data_wizyty.month - 1],
+        "data_rok": data_wizyty.year,
         "godzina": wizyta["godzina"],
         "status": wizyta["status"],
         "notatka": wizyta["notatka"],
@@ -170,12 +202,24 @@ def przygotuj_kalendarz_wizyt(
 
     for numer_dnia in range(1, liczba_dni + 1):
         wizyta = wizyty_w_miesiacu.get(numer_dnia)
+        data_dnia = date(rok, miesiac, numer_dnia)
+        typ_wizyty = None
+
+        if wizyta:
+            if data_dnia == dzisiaj:
+                typ_wizyty = "dzisiaj"
+            elif data_dnia > dzisiaj:
+                typ_wizyty = "przyszla"
+            else:
+                typ_wizyty = "miniona"
+
         dni.append(
             {
                 "numer": numer_dnia,
                 "wyciszony": False,
                 "ma_wizyte": wizyta is not None,
                 "wizyta": wizyta,
+                "typ_wizyty": typ_wizyty,
             }
         )
 

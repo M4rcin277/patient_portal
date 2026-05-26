@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Szybki zapis{% endblock %}
+
+{% block content %}
+<header class="booking-top-actions">
+  <button class="booking-help-button" type="button">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    Jak to działa?
+  </button>
+</header>
+
+<section class="booking-hero" aria-label="Zarezerwuj wizytę w 3 prostych krokach">
+  <div>
+    <h2>Zarezerwuj wizytę w 3 prostych krokach</h2>
+    <p>Wybierz specjalizację, lokalizację i najdogodniejszy termin.</p>
+    <div class="booking-steps" aria-label="Kroki rezerwacji wizyty">
+      <span class="active"><strong>1</strong> Wybierz specjalizację</span>
+      <span><strong>2</strong> Wybierz termin</span>
+      <span><strong>3</strong> Potwierdź wizytę</span>
+    </div>
+  </div>
+</section>
+
+<section class="section-card recommended-slots-card">
+  <div class="section-card-header">
+    <div>
+      <h2 class="section-title">Najbliższe terminy dla Ciebie</h2>
+      <p class="section-caption">Rekomendacje na podstawie Twojej lokalizacji i historii wizyt.</p>
+    </div>
+  </div>
+
+  <div class="recommended-slots-grid">
+    <article class="recommended-slot">
+      <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+      <strong>Kardiolog</strong>
+      <span>Dzisiaj, 17:30</span>
+      <button type="button" data-booking-quick>Szybki zapis</button>
+    </article>
+    <article class="recommended-slot">
+      <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+      <strong>Dermatolog</strong>
+      <span>Jutro, 11:45</span>
+      <button type="button" data-booking-quick>Szybki zapis</button>
+    </article>
+    <article class="recommended-slot">
+      <i class="bi bi-stethoscope" aria-hidden="true"></i>
+      <strong>Internista</strong>
+      <span>Pojutrze, 10:20</span>
+      <button type="button" data-booking-quick>Szybki zapis</button>
+    </article>
+    <article class="booking-contact-card">
+      <strong>Potrzebujesz pomocy?</strong>
+      <span>Nasi konsultanci są dostępni w dni robocze.</span>
+      <button type="button" data-app-message="Telefoniczny kontakt z konsultantem podepniemy po dodaniu danych placówki.">
+        <i class="bi bi-headset" aria-hidden="true"></i>
+        Zadzwoń teraz
+      </button>
+    </article>
+  </div>
+</section>
+
+<section class="booking-workspace">
+  <div class="booking-main-column">
+    <section class="section-card booking-specialties-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Specjalizacja</h2>
+      </div>
+      <div class="specialty-grid">
+        <button class="specialty-option active" type="button" data-specialty="Kardiolog">
+          <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+          <span>Kardiolog</span>
+        </button>
+        <button class="specialty-option" type="button" data-specialty="Dermatolog">
+          <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+          <span>Dermatolog</span>
+        </button>
+        <button class="specialty-option" type="button" data-specialty="Internista">
+          <i class="bi bi-stethoscope" aria-hidden="true"></i>
+          <span>Internista</span>
+        </button>
+        <button class="specialty-option" type="button" data-specialty="Ortopeda">
+          <i class="bi bi-bandaid" aria-hidden="true"></i>
+          <span>Ortopeda</span>
+        </button>
+        <button class="specialty-option" type="button" data-specialty="all">
+          <i class="bi bi-three-dots" aria-hidden="true"></i>
+          <span>Więcej</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="section-card booking-slots-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Dostępne terminy</h2>
+        <div class="booking-slot-filters" aria-label="Filtry terminów">
+          <button class="active" type="button" data-booking-day>Dziś</button>
+          <button type="button" data-booking-day>Jutro</button>
+          <button type="button" data-booking-day>Ten tydzień</button>
+          <button type="button" data-booking-day><i class="bi bi-camera-video" aria-hidden="true"></i> Online</button>
+        </div>
+      </div>
+
+      <div class="booking-slots-list">
+        {% for lekarz in lekarze %}
+        <article
+          class="booking-slot"
+          data-miasto="{{ lekarz['miasto'] }}"
+          data-specjalizacja="{{ lekarz['specjalizacja'] }}"
+        >
+          <div class="slot-date">
+            <span>{% if loop.first %}Dzisiaj{% else %}Jutro{% endif %}</span>
+            <strong>{{ godziny_przyjec[loop.index0] }}</strong>
+            <small>{% if loop.first %}10 czerwca{% else %}11 czerwca{% endif %}</small>
+          </div>
+          <div class="slot-doctor-avatar">
+            {{ lekarz["imie"][0] }}{{ lekarz["nazwisko"][0] }}
+          </div>
+          <div class="slot-main">
+            <strong>{{ lekarz["imie"] }} {{ lekarz["nazwisko"] }}</strong>
+            <span>{{ lekarz["specjalizacja"] }}</span>
+            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ lekarz["lokalizacja"] }}</small>
+          </div>
+          <button class="slot-book-button" type="button">Zarezerwuj</button>
+        </article>
+        {% endfor %}
+
+        <article class="booking-slot" data-miasto="Warszawa" data-specjalizacja="Internista">
+          <div class="slot-date">
+            <span>Pojutrze</span>
+            <strong>09:15</strong>
+            <small>12 czerwca</small>
+          </div>
+          <div class="slot-doctor-avatar warm">MZ</div>
+          <div class="slot-main">
+            <strong>Marta Zielińska</strong>
+            <span>Internista</span>
+            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> Centrum Medyczne Zdrowie</small>
+          </div>
+          <button class="slot-book-button" type="button">Zarezerwuj</button>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <aside class="booking-side-column">
+    <section class="section-card booking-location-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Lokalizacja</h2>
+      </div>
+      <div class="booking-location-layout">
+        <div>
+          <label class="form-field">
+            <span>Miasto i dzielnica</span>
+            <select name="lokalizacja" id="booking-location-select">
+              <option value="Warszawa">Warszawa, Centrum</option>
+              <option value="Krakow">Kraków, Stare Miasto</option>
+            </select>
+          </label>
+          <label class="location-toggle">
+            <span>Pokaż tylko terminy z wybranego miasta</span>
+            <input id="booking-city-filter" type="checkbox" checked>
+            <i aria-hidden="true"></i>
+          </label>
+        </div>
+        <div class="booking-location-map" aria-label="Podgląd lokalizacji">
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card booking-benefits-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Dlaczego warto zapisać się online?</h2>
+      </div>
+
+      <div class="booking-benefits-layout">
+        <div class="booking-benefits-visual" aria-hidden="true">
+          <img src="/static/icons/szybZapWykr.png" alt="">
+        </div>
+        <div>
+          <div class="booking-benefit">
+            <i class="bi bi-person-check" aria-hidden="true"></i>
+            <div>
+              <strong>Bez kolejek</strong>
+              <span>Zarezerwuj termin bez wychodzenia z domu.</span>
+            </div>
+          </div>
+          <div class="booking-benefit">
+            <i class="bi bi-lightning-charge" aria-hidden="true"></i>
+            <div>
+              <strong>Szybko i wygodnie</strong>
+              <span>Znajdź termin w kilka sekund.</span>
+            </div>
+          </div>
+          <div class="booking-benefit">
+            <i class="bi bi-bell" aria-hidden="true"></i>
+            <div>
+              <strong>Przypomnienia</strong>
+              <span>Powiadomimy Cię o wizycie.</span>
+            </div>
+          </div>
+          <div class="booking-benefit">
+            <i class="bi bi-shield-check" aria-hidden="true"></i>
+            <div>
+              <strong>Bezpiecznie</strong>
+              <span>Twoje dane są chronione.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="booking-next-slot">
+        <span>Najbliższy dostępny termin</span>
+        <strong>Kardiolog - dziś, 17:30</strong>
+        <small>Centrum Medyczne Zdrowie</small>
+        <button type="button" data-booking-quick>Zarezerwuj teraz</button>
+      </div>
+    </section>
+  </aside>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const locationSelect = document.querySelector("#booking-location-select");
+  const cityFilter = document.querySelector("#booking-city-filter");
+  const specialtyOptions = document.querySelectorAll(".specialty-option");
+  const bookingSlots = document.querySelectorAll(".booking-slot");
+  let selectedSpecialty = "Kardiolog";
+
+  function updateVisibleSlots() {
+    const selectedCity = locationSelect.value;
+    const shouldFilterByCity = cityFilter.checked;
+
+    bookingSlots.forEach((slot) => {
+      const slotCity = slot.dataset.miasto;
+      const slotSpecialty = slot.dataset.specjalizacja;
+      const matchesCity = !shouldFilterByCity || slotCity === selectedCity;
+      const matchesSpecialty =
+        selectedSpecialty === "all" || slotSpecialty === selectedSpecialty;
+      const shouldShowSlot = matchesCity && matchesSpecialty;
+
+      slot.hidden = !shouldShowSlot;
+    });
+  }
+
+  specialtyOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      selectedSpecialty = option.dataset.specialty;
+
+      specialtyOptions.forEach((item) => {
+        item.classList.toggle("active", item === option);
+      });
+
+      updateVisibleSlots();
+    });
+  });
+
+  locationSelect.addEventListener("change", updateVisibleSlots);
+  cityFilter.addEventListener("change", updateVisibleSlots);
+  updateVisibleSlots();
+
+  document.querySelectorAll("[data-booking-day]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-booking-day]").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      window.showAppToast?.(`Wybrano filtr terminów: ${button.textContent.trim()}.`);
+    });
+  });
+
+  document.querySelectorAll(".slot-book-button, [data-booking-quick]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.textContent = "Wybrano";
+      button.disabled = true;
+      window.showAppToast?.("Termin wybrany lokalnie. W kolejnym kroku wyślemy go formularzem POST.");
+    });
+  });
+</script>
+{% endblock %}
