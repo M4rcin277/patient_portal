@@ -34,6 +34,21 @@ POLSKIE_MIESIACE_NAGLOWEK = [
     "Grudzień",
 ]
 
+POLSKIE_MIESIACE_SKROT = [
+    "STY",
+    "LUT",
+    "MAR",
+    "KWI",
+    "MAJ",
+    "CZE",
+    "LIP",
+    "SIE",
+    "WRZ",
+    "PAZ",
+    "LIS",
+    "GRU",
+]
+
 
 def zamien_wizyte_na_datetime(wizyta):
     return datetime.strptime(
@@ -80,6 +95,7 @@ def znajdz_lekarza(lekarz_id: int):
 
 def przygotuj_wizyte_dla_pacjenta(wizyta):
     lekarz = znajdz_lekarza(wizyta["lekarz_id"])
+    data_wizyty = date.fromisoformat(wizyta["data"])
 
     return {
         "id": wizyta["id"],
@@ -88,6 +104,9 @@ def przygotuj_wizyte_dla_pacjenta(wizyta):
         "lokalizacja": lekarz["lokalizacja"],
         "data": wizyta["data"],
         "data_czytelna": formatuj_date_po_polsku(wizyta["data"]),
+        "data_dzien": f"{data_wizyty.day:02d}",
+        "data_miesiac_skrot": POLSKIE_MIESIACE_SKROT[data_wizyty.month - 1],
+        "data_rok": data_wizyty.year,
         "godzina": wizyta["godzina"],
         "status": wizyta["status"],
         "notatka": wizyta["notatka"],

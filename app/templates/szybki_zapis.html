@@ -3,11 +3,7 @@
 {% block title %}Szybki zapis{% endblock %}
 
 {% block content %}
-<header class="page-header">
-  <div>
-    <h1 class="page-title">Szybki zapis</h1>
-    <p class="page-subtitle">Znajdź najbliższy dostępny termin bez długiego oczekiwania na infolinii.</p>
-  </div>
+<header class="booking-top-actions">
   <button class="booking-help-button" type="button">
     <i class="bi bi-info-circle" aria-hidden="true"></i>
     Jak to działa?
@@ -23,6 +19,44 @@
       <span><strong>2</strong> Wybierz termin</span>
       <span><strong>3</strong> Potwierdź wizytę</span>
     </div>
+  </div>
+</section>
+
+<section class="section-card recommended-slots-card">
+  <div class="section-card-header">
+    <div>
+      <h2 class="section-title">Najbliższe terminy dla Ciebie</h2>
+      <p class="section-caption">Rekomendacje na podstawie Twojej lokalizacji i historii wizyt.</p>
+    </div>
+  </div>
+
+  <div class="recommended-slots-grid">
+    <article class="recommended-slot">
+      <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+      <strong>Kardiolog</strong>
+      <span>Dzisiaj, 17:30</span>
+      <button type="button" data-booking-quick>Szybki zapis</button>
+    </article>
+    <article class="recommended-slot">
+      <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+      <strong>Dermatolog</strong>
+      <span>Jutro, 11:45</span>
+      <button type="button" data-booking-quick>Szybki zapis</button>
+    </article>
+    <article class="recommended-slot">
+      <i class="bi bi-stethoscope" aria-hidden="true"></i>
+      <strong>Internista</strong>
+      <span>Pojutrze, 10:20</span>
+      <button type="button" data-booking-quick>Szybki zapis</button>
+    </article>
+    <article class="booking-contact-card">
+      <strong>Potrzebujesz pomocy?</strong>
+      <span>Nasi konsultanci są dostępni w dni robocze.</span>
+      <button type="button" data-app-message="Telefoniczny kontakt z konsultantem podepniemy po dodaniu danych placówki.">
+        <i class="bi bi-headset" aria-hidden="true"></i>
+        Zadzwoń teraz
+      </button>
+    </article>
   </div>
 </section>
 
@@ -59,7 +93,12 @@
     <section class="section-card booking-slots-card">
       <div class="section-card-header">
         <h2 class="section-title">Dostępne terminy</h2>
-        <span class="section-count">Dzisiaj - 10 czerwca</span>
+        <div class="booking-slot-filters" aria-label="Filtry terminów">
+          <button class="active" type="button" data-booking-day>Dziś</button>
+          <button type="button" data-booking-day>Jutro</button>
+          <button type="button" data-booking-day>Ten tydzień</button>
+          <button type="button" data-booking-day><i class="bi bi-camera-video" aria-hidden="true"></i> Online</button>
+        </div>
       </div>
 
       <div class="booking-slots-list">
@@ -109,18 +148,25 @@
       <div class="section-card-header">
         <h2 class="section-title">Lokalizacja</h2>
       </div>
-      <label class="form-field">
-        <span>Miasto i dzielnica</span>
-        <select name="lokalizacja" id="booking-location-select">
-          <option value="Warszawa">Warszawa, Centrum</option>
-          <option value="Krakow">Kraków, Stare Miasto</option>
-        </select>
-      </label>
-      <label class="location-toggle">
-        <span>Pokaż tylko terminy z wybranego miasta</span>
-        <input id="booking-city-filter" type="checkbox" checked>
-        <i aria-hidden="true"></i>
-      </label>
+      <div class="booking-location-layout">
+        <div>
+          <label class="form-field">
+            <span>Miasto i dzielnica</span>
+            <select name="lokalizacja" id="booking-location-select">
+              <option value="Warszawa">Warszawa, Centrum</option>
+              <option value="Krakow">Kraków, Stare Miasto</option>
+            </select>
+          </label>
+          <label class="location-toggle">
+            <span>Pokaż tylko terminy z wybranego miasta</span>
+            <input id="booking-city-filter" type="checkbox" checked>
+            <i aria-hidden="true"></i>
+          </label>
+        </div>
+        <div class="booking-location-map" aria-label="Podgląd lokalizacji">
+          <span></span>
+        </div>
+      </div>
     </section>
 
     <section class="section-card booking-benefits-card">
@@ -168,48 +214,10 @@
         <span>Najbliższy dostępny termin</span>
         <strong>Kardiolog - dziś, 17:30</strong>
         <small>Centrum Medyczne Zdrowie</small>
-        <button type="button">Zarezerwuj teraz</button>
+        <button type="button" data-booking-quick>Zarezerwuj teraz</button>
       </div>
     </section>
   </aside>
-</section>
-
-<section class="section-card recommended-slots-card">
-  <div class="section-card-header">
-    <div>
-      <h2 class="section-title">Najbliższe terminy dla Ciebie</h2>
-      <p class="section-caption">Rekomendacje na podstawie Twojej lokalizacji i historii wizyt.</p>
-    </div>
-  </div>
-
-  <div class="recommended-slots-grid">
-    <article class="recommended-slot">
-      <i class="bi bi-heart-pulse" aria-hidden="true"></i>
-      <strong>Kardiolog</strong>
-      <span>Dzisiaj, 17:30</span>
-      <button type="button">Szybki zapis</button>
-    </article>
-    <article class="recommended-slot">
-      <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
-      <strong>Dermatolog</strong>
-      <span>Jutro, 11:45</span>
-      <button type="button">Szybki zapis</button>
-    </article>
-    <article class="recommended-slot">
-      <i class="bi bi-stethoscope" aria-hidden="true"></i>
-      <strong>Internista</strong>
-      <span>Pojutrze, 10:20</span>
-      <button type="button">Szybki zapis</button>
-    </article>
-    <article class="booking-contact-card">
-      <strong>Potrzebujesz pomocy?</strong>
-      <span>Nasi konsultanci są dostępni w dni robocze.</span>
-      <button type="button">
-        <i class="bi bi-headset" aria-hidden="true"></i>
-        Zadzwoń teraz
-      </button>
-    </article>
-  </div>
 </section>
 {% endblock %}
 
@@ -252,5 +260,24 @@
   locationSelect.addEventListener("change", updateVisibleSlots);
   cityFilter.addEventListener("change", updateVisibleSlots);
   updateVisibleSlots();
+
+  document.querySelectorAll("[data-booking-day]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-booking-day]").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      window.showAppToast?.(`Wybrano filtr terminów: ${button.textContent.trim()}.`);
+    });
+  });
+
+  document.querySelectorAll(".slot-book-button, [data-booking-quick]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.textContent = "Wybrano";
+      button.disabled = true;
+      window.showAppToast?.("Termin wybrany lokalnie. W kolejnym kroku wyślemy go formularzem POST.");
+    });
+  });
 </script>
 {% endblock %}

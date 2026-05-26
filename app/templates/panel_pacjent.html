@@ -43,13 +43,13 @@
     <p class="visit-place">
       <i class="bi bi-geo-alt" aria-hidden="true"></i>
       <span>{{ najblizsza_wizyta["lokalizacja"] }}</span>
-      <a class="visit-map-link" href="#mapa-okolicy" aria-label="Pokaż lokalizację na mapie">
+      <a class="visit-map-link" href="#mapa-okolicy" aria-label="Pokaż lokalizację na mapie" data-app-message="Mapa w tym miejscu jest jeszcze makietą. Później podepniemy lokalizację placówki.">
         <i class="bi bi-geo" aria-hidden="true"></i>
       </a>
     </p>
 
     <div class="next-visit-footer">
-      <a class="visit-action" href="#">
+      <a class="visit-action" href="/moje-wizyty">
         Zobacz szczegóły wizyty
         <i class="bi bi-arrow-right" aria-hidden="true"></i>
       </a>
@@ -80,7 +80,7 @@
     <p class="visit-place">
       Gdy umówisz wizytę, jej szczegóły pojawią się w tym miejscu.
     </p>
-    <a class="visit-action" href="#">
+    <a class="visit-action" href="/szybki-zapis">
       Umów wizytę
       <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </a>
@@ -92,7 +92,7 @@
   <section class="section-card">
     <div class="section-card-header">
       <h2 class="section-title">Plan opieki</h2>
-      <a class="section-link" href="#">Przejdź do szczegółów <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+      <a class="section-link" href="/recepty">Przejdź do szczegółów <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
     </div>
 
     <div class="care-timeline">
@@ -130,9 +130,9 @@
           Filtry
         </summary>
         <div class="filter-menu">
-          <button class="filter-option active" type="button">Apteki</button>
-          <button class="filter-option" type="button">Lekarze</button>
-          <button class="filter-option" type="button">Szpitale</button>
+          <button class="filter-option active" type="button" data-nearby-filter>Apteki</button>
+          <button class="filter-option" type="button" data-nearby-filter>Lekarze</button>
+          <button class="filter-option" type="button" data-nearby-filter>Szpitale</button>
         </div>
       </details>
     </div>
@@ -186,4 +186,34 @@
     </div>
   </section>
 </div>
+
+<section class="dashboard-summary-strip" aria-label="Podsumowanie pacjenta">
+  {% for pozycja in podsumowanie_panelu %}
+  <article class="dashboard-summary-item">
+    <span class="dashboard-summary-icon">
+      <i class="bi {{ pozycja['ikona'] }}" aria-hidden="true"></i>
+    </span>
+    <div>
+      <strong>{{ pozycja["wartosc"] }}</strong>
+      <span>{{ pozycja["tytul"] }}</span>
+      <small>{{ pozycja["opis"] }}</small>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-nearby-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-nearby-filter]").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      window.showAppToast?.(`Widok mapy przełączony na: ${button.textContent.trim()}.`);
+    });
+  });
+</script>
 {% endblock %}

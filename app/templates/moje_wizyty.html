@@ -6,13 +6,24 @@
 <header class="page-header visits-page-header">
   <div>
     <h1 class="page-title">Moje wizyty</h1>
-    <p class="page-subtitle">Twój personalny kalendarz wizyt.</p>
+    <p class="page-subtitle">Twój osobisty kalendarz wizyt i konsultacji.</p>
   </div>
 </header>
 
 <section class="appointments-shell">
   <div class="section-card appointments-calendar-card">
-    <div class="appointments-calendar-header">
+    <div class="appointments-card-title-row">
+      <h2 class="section-title">Kalendarz wizyt</h2>
+      <div class="appointments-card-actions">
+        <a class="appointment-light-action" href="/moje-wizyty">Dzisiaj</a>
+        <a class="appointment-primary-action compact" href="/szybki-zapis">
+          <i class="bi bi-plus-lg" aria-hidden="true"></i>
+          Nowa wizyta
+        </a>
+      </div>
+    </div>
+
+    <div class="appointments-month-row">
       <a
         class="calendar-nav-button large"
         href="/moje-wizyty?rok={{ kalendarz_wizyt['poprzedni_miesiac']['rok'] }}&miesiac={{ kalendarz_wizyt['poprzedni_miesiac']['miesiac'] }}"
@@ -20,9 +31,9 @@
       >
         <i class="bi bi-chevron-left" aria-hidden="true"></i>
       </a>
-      <div>
-        <h2 class="section-title">{{ kalendarz_wizyt["miesiac"] }}</h2>
-        <p>Kolory dni pokazują status wizyt w wybranym miesiącu.</p>
+      <div class="appointments-month-select">
+        {{ kalendarz_wizyt["miesiac"] }}
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
       </div>
       <a
         class="calendar-nav-button large"
@@ -61,76 +72,45 @@
     </div>
   </div>
 
-  <section class="visits-support-strip" aria-label="Szybkie akcje wizyt">
-    <article class="visits-support-item">
-      <div class="support-icon">
-        <i class="bi bi-chat-dots" aria-hidden="true"></i>
-      </div>
-      <div>
-        <strong>Potrzebujesz pomocy?</strong>
-        <span>Skontaktuj się z nami.</span>
-      </div>
-    </article>
-
-    <article class="visits-support-item">
-      <div class="support-icon">
-        <i class="bi bi-bell" aria-hidden="true"></i>
-      </div>
-      <div>
-        <strong>Przypomnienia</strong>
-        <span>Powiadomienia o wizytach.</span>
-      </div>
-      <label class="support-toggle" aria-label="Włącz przypomnienia">
-        <input type="checkbox" checked>
-        <span></span>
-      </label>
-    </article>
-
-    <article class="visits-support-item">
-      <div class="support-icon">
-        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
-      </div>
-      <div>
-        <strong>Synchronizacja</strong>
-        <span>Dodaj wizyty do kalendarza.</span>
-      </div>
-    </article>
-  </section>
-
-  <aside class="section-card appointments-panel">
-    <div class="appointments-panel-actions">
-      <a class="appointment-primary-action" href="/szybki-zapis">
-        Utwórz wizytę
-        <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      </a>
-      <button class="appointment-secondary-action" type="button">
-        Przesuń wizytę
-        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <div class="section-card-header">
+  <section class="section-card visits-list-card">
+    <div class="visits-list-heading">
       <h2 class="section-title">Nadchodzące wizyty</h2>
-      <span class="section-count">{{ nadchodzace_wizyty|length }} terminy</span>
+      <div class="visits-list-tools">
+        <label class="visits-search">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input type="search" placeholder="Wyszukaj wizytę, lekarza lub specjalizację...">
+        </label>
+      <button class="filter-button" type="button" data-app-message="Filtry wizyt podepniemy do statusów i specjalizacji po uporządkowaniu backendu.">
+          <i class="bi bi-funnel" aria-hidden="true"></i>
+          Filtry
+        </button>
+      </div>
     </div>
 
     {% if nadchodzace_wizyty %}
-    <div class="appointments-panel-list">
-      {% for wizyta in nadchodzace_wizyty %}
+    <div class="visits-list">
+      {% for wizyta in nadchodzace_wizyty[:2] %}
       <button
-        class="appointment-list-button"
+        class="visit-row-button"
         type="button"
         data-bs-toggle="modal"
         data-bs-target="#wizytaModal{{ wizyta['id'] }}"
       >
-        <span class="appointment-list-date">
-          <strong>{{ wizyta["data_czytelna"] }}</strong>
+        <span class="visit-row-date">
+          <strong>{{ wizyta["data_dzien"] }}</strong>
+          <span>{{ wizyta["data_miesiac_skrot"] }}</span>
+          <small>{{ wizyta["data_rok"] }}</small>
+        </span>
+        <span class="visit-row-main">
           <small>{{ wizyta["godzina"] }}</small>
+          <strong>{{ wizyta["specjalizacja"] }}</strong>
+          <small>{{ wizyta["lekarz"] }}</small>
         </span>
-        <span class="appointment-list-main">
-          <strong>{{ wizyta["lekarz"] }}</strong>
-          <small>{{ wizyta["specjalizacja"] }}</small>
+        <span class="visit-row-place">
+          <i class="bi bi-geo-alt" aria-hidden="true"></i>
+          {{ wizyta["lokalizacja"] }}
         </span>
+        <span class="visit-row-status">{{ wizyta["status"] }}</span>
         <i class="bi bi-chevron-right" aria-hidden="true"></i>
       </button>
       {% endfor %}
@@ -139,20 +119,125 @@
     <div class="empty-page-state compact">
       <i class="bi bi-calendar-x" aria-hidden="true"></i>
       <strong>Brak nadchodzących wizyt</strong>
-      <span>W kalendarzu mogą być widoczne starsze terminy, ale lista pokazuje tylko przyszłe wizyty.</span>
+      <span>Nowe terminy pojawią się tutaj po umówieniu wizyty.</span>
     </div>
     {% endif %}
+  </section>
 
-    <div class="visit-prep-card">
-      <div class="visit-prep-icon">
-        <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
+  <aside class="appointments-right-column">
+    <section class="section-card next-appointment-panel">
+      {% if najblizsza_wizyta %}
+      <div class="next-appointment-header">
+        <span class="next-appointment-icon">
+          <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+        </span>
+        <div>
+          <span>Najbliższa wizyta</span>
+          <strong>{{ najblizsza_wizyta["data_czytelna"] }}, {{ najblizsza_wizyta["godzina"] }}</strong>
+        </div>
+        <span class="next-appointment-badge">{{ najblizsza_wizyta["status"] }}</span>
       </div>
-      <div>
-        <strong>Zalecenia przed wizytą</strong>
-        <p>Pamiętaj, aby zabrać wyniki badań oraz listę przyjmowanych leków.</p>
-        <button type="button">Zobacz listę zaleceń <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+
+      <div class="next-appointment-body">
+        <div class="doctor-avatar">
+          <i class="bi bi-person-circle" aria-hidden="true"></i>
+        </div>
+        <div class="next-appointment-details">
+          <h2>lek. {{ najblizsza_wizyta["lekarz"] }}</h2>
+          <strong>{{ najblizsza_wizyta["specjalizacja"] }}</strong>
+          <span>
+            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+            {{ najblizsza_wizyta["lokalizacja"] }}
+          </span>
+        </div>
       </div>
-    </div>
+
+      <div class="next-appointment-actions">
+        <button
+          class="appointment-primary-action"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#wizytaModal{{ najblizsza_wizyta['id'] }}"
+        >
+          Szczegóły wizyty
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+        <button class="appointment-secondary-action" type="button" data-app-message="Przenoszenie wizyty będzie korzystać z wolnych terminów lekarza.">
+          <i class="bi bi-calendar-event" aria-hidden="true"></i>
+          Przenieś wizytę
+        </button>
+        <button class="appointment-danger-action" type="button" data-app-message="Odwołanie wizyty wymaga potwierdzenia i zapisu po stronie backendu.">
+          <i class="bi bi-trash" aria-hidden="true"></i>
+          Odwołaj wizytę
+        </button>
+      </div>
+      {% else %}
+      <div class="empty-page-state compact">
+        <i class="bi bi-calendar-x" aria-hidden="true"></i>
+        <strong>Brak najbliższej wizyty</strong>
+        <span>Umów nowy termin w szybkim zapisie.</span>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="section-card appointments-panel">
+      <div class="section-card-header">
+        <h2 class="section-title">Lista wizyt</h2>
+        <a class="section-link" href="/moje-wizyty">Zobacz wszystkie <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+      </div>
+
+      {% if nadchodzace_wizyty|length > 1 %}
+      <div class="appointments-panel-list">
+        {% for wizyta in nadchodzace_wizyty[:4] %}
+        <button
+          class="appointment-list-button"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#wizytaModal{{ wizyta['id'] }}"
+        >
+          <span class="appointment-list-date">
+            <strong>{{ wizyta["data_dzien"] }}</strong>
+            <span>{{ wizyta["data_miesiac_skrot"] }}</span>
+            <small>{{ wizyta["data_rok"] }}</small>
+          </span>
+          <span class="appointment-list-main">
+            <small>{{ wizyta["godzina"] }}</small>
+            <strong>{{ wizyta["specjalizacja"] }}</strong>
+            <small>{{ wizyta["lekarz"] }}</small>
+          </span>
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-page-state compact">
+        <i class="bi bi-calendar-x" aria-hidden="true"></i>
+        <strong>Brak kolejnych wizyt</strong>
+        <span>Lista pokaże następne terminy po ich umówieniu.</span>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="section-card useful-info-card">
+      <h2 class="section-title">Przydatne informacje</h2>
+      <div class="useful-info-grid">
+        <article>
+          <span><i class="bi bi-clock" aria-hidden="true"></i></span>
+          <strong>Przyjdź 10 minut wcześniej</strong>
+          <p>Dajemy czas na formalności i przygotowanie do wizyty.</p>
+        </article>
+        <article>
+          <span><i class="bi bi-clipboard2-check" aria-hidden="true"></i></span>
+          <strong>Zabierz dokumenty</strong>
+          <p>Dowód osobisty, wyniki badań oraz listę przyjmowanych leków.</p>
+        </article>
+        <article>
+          <span><i class="bi bi-telephone" aria-hidden="true"></i></span>
+          <strong>Nie możesz przyjść?</strong>
+          <p>Daj nam znać jak najszybciej, abyśmy mogli pomóc innym.</p>
+        </article>
+      </div>
+    </section>
   </aside>
 </section>
 

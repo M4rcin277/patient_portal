@@ -3,25 +3,250 @@
 {% block title %}Lekarze{% endblock %}
 
 {% block content %}
-<header class="page-header">
+<header class="page-header doctors-page-header">
   <div>
     <h1 class="page-title">Lekarze</h1>
-    <p class="page-subtitle">Lista lekarzy dostępnych w portalu pacjenta.</p>
+    <p class="page-subtitle">Znajdź lekarza, sprawdź dostępność i umów wizytę.</p>
   </div>
+  <button class="booking-help-button" type="button" data-app-message="Wyszukaj specjalizację, wybierz lekarza i przejdź do szybkiego zapisu.">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    Jak to działa?
+  </button>
 </header>
 
-<section class="cards-grid">
-  {% for lekarz in lekarze %}
-  <article class="section-card directory-card">
-    <div class="directory-icon">
-      <i class="bi bi-person-badge" aria-hidden="true"></i>
-    </div>
-    <div>
-      <h2 class="section-title">{{ lekarz["imie"] }} {{ lekarz["nazwisko"] }}</h2>
-      <p>{{ lekarz["specjalizacja"] }}</p>
-      <span>{{ lekarz["lokalizacja"] }}</span>
-    </div>
-  </article>
-  {% endfor %}
+<section class="doctors-layout">
+  <div class="doctors-main-column">
+    <section class="section-card doctors-search-card">
+      <label class="doctors-search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="search" placeholder="Wyszukaj lekarza, specjalizację lub placówkę...">
+      </label>
+      <button class="doctor-filter-button" type="button" data-app-message="Zaawansowane filtry specjalizacji podepniemy do backendu.">Specjalizacja <i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+      <button class="doctor-filter-button" type="button" data-app-message="Filtrowanie po lokalizacji połączymy później z miastem pacjenta.">Lokalizacja <i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+      <button class="doctor-filter-button" type="button" data-app-message="Tryb wizyty będzie filtrował wizyty stacjonarne i online.">Tryb wizyty <i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+      <button class="doctor-search-button" type="button">Szukaj</button>
+    </section>
+
+    <section class="section-card doctors-specialties-card">
+      <h2 class="section-title">Najpopularniejsze specjalizacje</h2>
+      <div class="doctors-specialties-grid">
+        <button class="doctor-specialty-card active" type="button">
+          <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+          <strong>Kardiolog</strong>
+          <span>128 lekarzy</span>
+        </button>
+        <button class="doctor-specialty-card" type="button">
+          <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+          <strong>Dermatolog</strong>
+          <span>96 lekarzy</span>
+        </button>
+        <button class="doctor-specialty-card" type="button">
+          <i class="bi bi-stethoscope" aria-hidden="true"></i>
+          <strong>Internista</strong>
+          <span>142 lekarzy</span>
+        </button>
+        <button class="doctor-specialty-card" type="button">
+          <i class="bi bi-bandaid" aria-hidden="true"></i>
+          <strong>Ortopeda</strong>
+          <span>87 lekarzy</span>
+        </button>
+        <button class="doctor-specialty-card" type="button">
+          <i class="bi bi-emoji-smile" aria-hidden="true"></i>
+          <strong>Pediatra</strong>
+          <span>111 lekarzy</span>
+        </button>
+        <button class="doctor-specialty-card" type="button">
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          <strong>Zobacz więcej</strong>
+          <span>21 specjalizacji</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="section-card recommended-doctors-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Polecani lekarze</h2>
+        <div class="doctor-list-tabs" aria-label="Filtry listy lekarzy">
+          <button class="active" type="button">Wszyscy</button>
+          <button type="button">Blisko Ciebie</button>
+          <button type="button">Dostępni dzisiaj</button>
+          <button type="button">Online</button>
+        </div>
+      </div>
+
+      <div class="doctor-list">
+        {% for lekarz in lekarze %}
+        <article class="doctor-list-row">
+          <div class="doctor-avatar">{{ lekarz["imie"][0] }}{{ lekarz["nazwisko"][0] }}</div>
+          <div class="doctor-row-main">
+            <strong>lek. {{ lekarz["imie"] }} {{ lekarz["nazwisko"] }} <i class="bi bi-patch-check-fill" aria-hidden="true"></i></strong>
+            <span>{{ lekarz["specjalizacja"] }}</span>
+            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ lekarz["lokalizacja"] }}</small>
+            <em><i class="bi bi-star-fill" aria-hidden="true"></i> 4.9 (128 opinii)</em>
+          </div>
+          <div class="doctor-row-meta">
+            <span>Najbliższy termin</span>
+            <strong>{% if loop.first %}Dzisiaj, 17:30{% else %}Jutro, 11:45{% endif %}</strong>
+            <small>Dostępna {% if loop.first %}dzisiaj{% else %}jutro{% endif %}</small>
+          </div>
+          <div class="doctor-row-meta">
+            <span>Tryb wizyty</span>
+            <strong>{% if loop.first %}Stacjonarna, Online{% else %}Stacjonarna{% endif %}</strong>
+          </div>
+          <div class="doctor-row-actions">
+            <a class="doctor-book-button" href="/szybki-zapis">
+              <i class="bi bi-calendar-check" aria-hidden="true"></i>
+              Umów wizytę
+            </a>
+            <button class="doctor-profile-button" type="button" data-app-message="Profil lekarza dodamy jako osobny widok po backendzie lekarzy.">Zobacz profil</button>
+          </div>
+        </article>
+        {% endfor %}
+
+        <article class="doctor-list-row">
+          <div class="doctor-avatar warm">MW</div>
+          <div class="doctor-row-main">
+            <strong>lek. Michał Wiśniewski <i class="bi bi-patch-check-fill" aria-hidden="true"></i></strong>
+            <span>Ortopeda</span>
+            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> Centrum Ortopedyczne, Warszawa</small>
+            <em><i class="bi bi-star-fill" aria-hidden="true"></i> 4.8 (87 opinii)</em>
+          </div>
+          <div class="doctor-row-meta">
+            <span>Najbliższy termin</span>
+            <strong>Jutro, 14:00</strong>
+            <small>Dostępna jutro</small>
+          </div>
+          <div class="doctor-row-meta">
+            <span>Tryb wizyty</span>
+            <strong>Stacjonarna, Online</strong>
+          </div>
+          <div class="doctor-row-actions">
+            <a class="doctor-book-button" href="/szybki-zapis">
+              <i class="bi bi-calendar-check" aria-hidden="true"></i>
+              Umów wizytę
+            </a>
+            <button class="doctor-profile-button" type="button" data-app-message="Profil lekarza dodamy jako osobny widok po backendzie lekarzy.">Zobacz profil</button>
+          </div>
+        </article>
+      </div>
+      <div class="doctor-list-more">
+        <button type="button" data-app-message="W widoku demo pokazujemy najważniejszych lekarzy. Pełną paginację dodamy z backendem.">
+          Zobacz więcej lekarzy
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <aside class="doctors-side-column">
+    <section class="section-card doctor-help-card">
+      <img
+        class="doctor-help-image"
+        src="/static/icons/stetoskZaklLekarz.png"
+        alt=""
+        aria-hidden="true"
+      >
+      <span class="doctor-help-kicker"><i class="bi bi-headset" aria-hidden="true"></i> Potrzebujesz pomocy?</span>
+      <h2>Nie wiesz, którego lekarza wybrać?</h2>
+      <p>Opisz objawy, a system podpowie specjalizację i właściwy typ wizyty.</p>
+      <a class="doctor-symptoms-button" href="/szybki-zapis">
+        <i class="bi bi-ui-checks-grid" aria-hidden="true"></i>
+        Opisz objawy
+      </a>
+    </section>
+
+    <section class="section-card recent-doctors-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Ostatnio konsultowani</h2>
+        <a class="section-link" href="/moje-wizyty">Zobacz wszystkie</a>
+      </div>
+      <div class="recent-doctors-list">
+        {% for lekarz in lekarze %}
+        <article>
+          <div class="doctor-avatar small">{{ lekarz["imie"][0] }}{{ lekarz["nazwisko"][0] }}</div>
+          <div>
+            <strong>lek. {{ lekarz["imie"] }} {{ lekarz["nazwisko"] }}</strong>
+            <span>{{ lekarz["specjalizacja"] }}</span>
+          </div>
+          <small>{% if loop.first %}10.06.2026{% else %}02.07.2026{% endif %}</small>
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="section-card trusted-facilities-card">
+      <div class="section-card-header">
+        <h2 class="section-title">Zaufane placówki</h2>
+        <a class="section-link" href="/apteki">Zobacz wszystkie</a>
+      </div>
+      <div class="trusted-facilities-list">
+        <article>
+          <i class="bi bi-hospital" aria-hidden="true"></i>
+          <div>
+            <strong>Centrum Medyczne Zdrowie</strong>
+            <span><i class="bi bi-star-fill" aria-hidden="true"></i> 4.9 (1.2k) · 1.2 km</span>
+          </div>
+        </article>
+        <article>
+          <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+          <div>
+            <strong>Centrum Ortopedyczne</strong>
+            <span><i class="bi bi-star-fill" aria-hidden="true"></i> 4.8 (856) · 2.7 km</span>
+          </div>
+        </article>
+        <article>
+          <i class="bi bi-prescription2" aria-hidden="true"></i>
+          <div>
+            <strong>Dermacenter</strong>
+            <span><i class="bi bi-star-fill" aria-hidden="true"></i> 4.7 (623) · 3.1 km</span>
+          </div>
+        </article>
+      </div>
+    </section>
+  </aside>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const doctorSearchInput = document.querySelector(".doctors-search input");
+  const doctorRows = Array.from(document.querySelectorAll(".doctor-list-row"));
+  const specialtyCards = document.querySelectorAll(".doctor-specialty-card");
+  const doctorTabs = document.querySelectorAll(".doctor-list-tabs button");
+
+  function filterDoctorRows() {
+    const query = doctorSearchInput?.value.trim().toLowerCase() || "";
+
+    doctorRows.forEach((row) => {
+      row.hidden = query.length > 0 && !row.textContent.toLowerCase().includes(query);
+    });
+  }
+
+  doctorSearchInput?.addEventListener("input", filterDoctorRows);
+
+  document.querySelector(".doctor-search-button")?.addEventListener("click", () => {
+    filterDoctorRows();
+    window.showAppToast?.("Lista lekarzy została przefiltrowana lokalnie.");
+  });
+
+  specialtyCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      specialtyCards.forEach((item) => item.classList.remove("active"));
+      card.classList.add("active");
+
+      const specialty = card.querySelector("strong")?.textContent.trim();
+      doctorSearchInput.value = specialty === "Zobacz więcej" ? "" : specialty;
+      filterDoctorRows();
+    });
+  });
+
+  doctorTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      doctorTabs.forEach((item) => item.classList.remove("active"));
+      tab.classList.add("active");
+      window.showAppToast?.(`Wybrano filtr: ${tab.textContent.trim()}.`);
+    });
+  });
+</script>
 {% endblock %}

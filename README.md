@@ -40,6 +40,8 @@ Aktualnie dostępne są między innymi:
 - profil aktualnego pacjenta,
 - wizyty aktualnego pacjenta,
 - panel pacjenta z podsumowaniem wizyt,
+- profil pacjenta dostępny z profilu w górnej nawigacji,
+- wspólna górna nawigacja dla wszystkich widoków pacjenta,
 - widok moich wizyt z kalendarzem,
 - widok szybkiego zapisu z filtrowaniem po specjalizacji i mieście,
 - widok historii medycznej jako stos 3 najnowszych wpisów,
@@ -85,6 +87,7 @@ Najważniejsze widoki pacjenta:
 http://127.0.0.1:8000/moje-wizyty
 http://127.0.0.1:8000/szybki-zapis
 http://127.0.0.1:8000/historia
+http://127.0.0.1:8000/profil
 ```
 
 Dokumentacja API:

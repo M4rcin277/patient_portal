@@ -5,9 +5,12 @@ from fastapi.templating import Jinja2Templates
 from app.dane import (
     apteki,
     godziny_przyjec,
+    harmonogram_lekow,
     historia_medyczna,
     lekarze,
+    leki_pacjenta,
     plan_opieki,
+    recepty_pacjenta,
     wizyty,
 )
 
@@ -51,6 +54,42 @@ def panel_pacjenta(
     if len(nadchodzace_wizyty) > 1:
         kolejna_wizyta = nadchodzace_wizyty[1]
 
+    aktywne_recepty = "0"
+    nowe_wyniki = "0"
+
+    for element in plan_opieki:
+        if element["tytul"] == "Aktywne recepty":
+            aktywne_recepty = element["etykieta"].split()[0]
+        if element["tytul"] == "Zalecenia lekarza":
+            nowe_wyniki = element["etykieta"].split()[0]
+
+    podsumowanie_panelu = [
+        {
+            "ikona": "bi-calendar-check",
+            "wartosc": len(nadchodzace_wizyty),
+            "tytul": "Nadchodzące wizyty",
+            "opis": "w tym miesiącu",
+        },
+        {
+            "ikona": "bi-capsule",
+            "wartosc": aktywne_recepty,
+            "tytul": "Aktywne recepty",
+            "opis": "do wykupienia",
+        },
+        {
+            "ikona": "bi-clipboard2-pulse",
+            "wartosc": nowe_wyniki,
+            "tytul": "Nieprzeczytane wyniki",
+            "opis": "badań",
+        },
+        {
+            "ikona": "bi-shield-check",
+            "wartosc": "PZU Zdrowie",
+            "tytul": "Ubezpieczenie",
+            "opis": "Aktywne",
+        },
+    ]
+
     return templates.TemplateResponse(
         request,
         "panel_pacjent.html",
@@ -63,6 +102,7 @@ def panel_pacjenta(
             "kolejna_wizyta": kolejna_wizyta,
             "plan_opieki": plan_opieki,
             "kalendarz_wizyt": kalendarz_wizyt,
+            "podsumowanie_panelu": podsumowanie_panelu,
         },
     )
 
@@ -92,6 +132,7 @@ def widok_moje_wizyty(
             "pacjent": pacjent,
             "aktywna_strona": "wizyty",
             "nadchodzace_wizyty": nadchodzace_wizyty,
+            "najblizsza_wizyta": najblizsza_wizyta,
             "kalendarz_wizyt": kalendarz_wizyt,
         },
     )
@@ -125,7 +166,8 @@ def widok_recepty(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "recepty",
-            "plan_opieki": plan_opieki,
+            "recepty_pacjenta": recepty_pacjenta,
+            "apteki": apteki,
         },
     )
 
@@ -146,20 +188,26 @@ def widok_lekarze(request: Request):
     )
 
 
-@app.get("/apteki")
-def widok_apteki(request: Request):
+@app.get("/leki")
+def widok_leki(request: Request):
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id)
 
     return templates.TemplateResponse(
         request,
-        "apteki.html",
+        "leki.html",
         {
             "pacjent": pacjent,
-            "aktywna_strona": "apteki",
-            "apteki": apteki,
+            "aktywna_strona": "leki",
+            "leki_pacjenta": leki_pacjenta,
+            "harmonogram_lekow": harmonogram_lekow,
         },
     )
+
+
+@app.get("/apteki")
+def widok_apteki(request: Request):
+    return widok_leki(request)
 
 
 @app.get("/historia")
@@ -175,6 +223,32 @@ def widok_historia(request: Request):
             "pacjent": pacjent,
             "aktywna_strona": "historia",
             "historia_medyczna": wpisy_historii,
+        },
+    )
+
+
+@app.get("/profil")
+def widok_profil(request: Request):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
+    najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
+    ostatnie_wizyty = sorted(
+        moje_wizyty,
+        key=lambda wizyta: wizyta["data"],
+        reverse=True,
+    )[:3]
+
+    return templates.TemplateResponse(
+        request,
+        "profil.html",
+        {
+            "pacjent": pacjent,
+            "aktywna_strona": "profil",
+            "najblizsza_wizyta": najblizsza_wizyta,
+            "ostatnie_wizyty": ostatnie_wizyty,
+            "plan_opieki": plan_opieki,
         },
     )
 

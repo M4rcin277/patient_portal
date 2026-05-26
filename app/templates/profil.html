@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Profil pacjenta{% endblock %}
+
+{% block content %}
+<section class="profile-shell">
+  <aside class="profile-card">
+    <div class="profile-card-cover">
+      <div class="profile-orbit">
+        <div class="profile-photo">
+          {{ pacjent["imie"][0] }}{{ pacjent["nazwisko"][0] }}
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card-body">
+      <h1>{{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}</h1>
+      <span class="profile-status">Aktywny pacjent</span>
+
+      <div class="profile-details-list">
+        <div class="profile-detail-item">
+          <i class="bi bi-calendar2-week" aria-hidden="true"></i>
+          <div>
+            <span>Data urodzenia</span>
+            <strong>{{ pacjent["data_urodzenia"] }}</strong>
+          </div>
+        </div>
+        <div class="profile-detail-item">
+          <i class="bi bi-telephone" aria-hidden="true"></i>
+          <div>
+            <span>Telefon</span>
+            <strong>{{ pacjent["telefon"] }}</strong>
+          </div>
+        </div>
+        <div class="profile-detail-item">
+          <i class="bi bi-envelope" aria-hidden="true"></i>
+          <div>
+            <span>E-mail</span>
+            <strong>{{ pacjent["email"] }}</strong>
+          </div>
+        </div>
+        <div class="profile-detail-item">
+          <i class="bi bi-geo-alt" aria-hidden="true"></i>
+          <div>
+            <span>Adres</span>
+            <strong>{{ pacjent["adres"] }}</strong>
+          </div>
+        </div>
+        <div class="profile-detail-item">
+          <i class="bi bi-droplet" aria-hidden="true"></i>
+          <div>
+            <span>Grupa krwi</span>
+            <strong>0 Rh+</strong>
+          </div>
+        </div>
+        <div class="profile-detail-item">
+          <i class="bi bi-shield-check" aria-hidden="true"></i>
+          <div>
+            <span>Ubezpieczenie</span>
+            <strong>PZU Zdrowie</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="profile-dashboard">
+    <nav class="profile-tabs" aria-label="Sekcje profilu pacjenta">
+      <a class="active" href="/profil">
+        <i class="bi bi-calendar2-week" aria-hidden="true"></i>
+        Podsumowanie
+      </a>
+      <a href="/moje-wizyty">
+        <i class="bi bi-calendar-check" aria-hidden="true"></i>
+        Wizyty
+      </a>
+      <a href="/recepty">
+        <i class="bi bi-file-earmark-medical" aria-hidden="true"></i>
+        Dokumenty
+      </a>
+      <a href="/ustawienia">
+        <i class="bi bi-journal-text" aria-hidden="true"></i>
+        Notatki
+      </a>
+      <a href="/historia">
+        <i class="bi bi-clock-history" aria-hidden="true"></i>
+        Historia
+      </a>
+    </nav>
+
+    <section class="profile-medical-strip">
+      <div class="profile-medical-title">
+        <i class="bi bi-activity" aria-hidden="true"></i>
+        <strong>Informacje medyczne</strong>
+      </div>
+      <div>
+        <span>Alergie</span>
+        <strong>Brak znanych alergii</strong>
+      </div>
+      <div>
+        <span>Choroby przewlekłe</span>
+        <strong>Nadciśnienie tętnicze</strong>
+      </div>
+      <div>
+        <span>Leki stałe</span>
+        <strong>Polocard 75 mg<br>Metformina 500 mg</strong>
+      </div>
+      <div>
+        <span>Ostatnia wizyta</span>
+        {% if ostatnie_wizyty %}
+        <strong>{{ ostatnie_wizyty[0]["data"] }}<br>{{ ostatnie_wizyty[0]["specjalizacja"] }}</strong>
+        {% else %}
+        <strong>Brak wizyt</strong>
+        {% endif %}
+      </div>
+    </section>
+
+    <div class="profile-grid">
+      <section class="section-card profile-appointment-card">
+        <div class="section-card-header">
+          <h2 class="section-title">
+            <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+            Nadchodząca wizyta
+          </h2>
+          {% if najblizsza_wizyta %}
+          <span class="profile-pill">Zaplanowana</span>
+          {% endif %}
+        </div>
+
+        {% if najblizsza_wizyta %}
+        <div class="profile-visit-summary">
+          <div>
+            <span>{{ najblizsza_wizyta["data_czytelna"] }}</span>
+            <strong>{{ najblizsza_wizyta["godzina"] }}</strong>
+          </div>
+          <div>
+            <span>Specjalizacja</span>
+            <strong>{{ najblizsza_wizyta["specjalizacja"] }}</strong>
+          </div>
+          <div>
+            <span>Lokalizacja</span>
+            <strong>{{ najblizsza_wizyta["lokalizacja"] }}</strong>
+          </div>
+        </div>
+        <a class="profile-primary-link" href="/moje-wizyty">
+          Zobacz szczegóły wizyty
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+        {% else %}
+        <div class="empty-page-state compact">
+          <i class="bi bi-calendar-x" aria-hidden="true"></i>
+          <strong>Brak nadchodzących wizyt</strong>
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="section-card profile-shortcuts-card">
+        <div class="section-card-header">
+          <h2 class="section-title">
+            <i class="bi bi-grid" aria-hidden="true"></i>
+            Szybki dostęp
+          </h2>
+        </div>
+        <div class="profile-shortcuts-grid">
+          <a href="/szybki-zapis">
+            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+            Umów wizytę
+          </a>
+          <a href="/historia">
+            <i class="bi bi-file-earmark-pulse" aria-hidden="true"></i>
+            Wyniki badań
+          </a>
+          <a href="/recepty">
+            <i class="bi bi-capsule" aria-hidden="true"></i>
+            Recepty
+          </a>
+          <a href="/lekarze-widok">
+            <i class="bi bi-person-badge" aria-hidden="true"></i>
+            Lekarze
+          </a>
+          <a href="/moje-wizyty">
+            <i class="bi bi-clock" aria-hidden="true"></i>
+            Historia wizyt
+          </a>
+          <a href="/ustawienia">
+            <i class="bi bi-card-text" aria-hidden="true"></i>
+            Moje dane
+          </a>
+        </div>
+      </section>
+
+      <section class="section-card profile-list-card">
+        <div class="section-card-header">
+          <h2 class="section-title">Ostatnie wizyty</h2>
+          <a class="section-link" href="/moje-wizyty">Zobacz wszystkie</a>
+        </div>
+        <div class="profile-mini-list">
+          {% for wizyta in ostatnie_wizyty %}
+          <article>
+            <i class="bi bi-calendar-check" aria-hidden="true"></i>
+            <div>
+              <strong>{{ wizyta["data"] }}</strong>
+              <span>{{ wizyta["specjalizacja"] }} · {{ wizyta["notatka"] }}</span>
+            </div>
+            <small>Zakończona</small>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="section-card profile-list-card">
+        <div class="section-card-header">
+          <h2 class="section-title">Najbliższe zalecenia</h2>
+        </div>
+        <div class="profile-recommendations-list">
+          {% for element in plan_opieki[:3] %}
+          <article>
+            <i class="bi {{ element['ikona'] }}" aria-hidden="true"></i>
+            <strong>{{ element["tytul"] }}</strong>
+            <span>{{ element["data"] }}</span>
+          </article>
+          {% endfor %}
+        </div>
+        <a class="profile-note-link" href="/recepty">
+          Masz 2 aktywne recepty do wykupienia
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </a>
+      </section>
+    </div>
+  </section>
+</section>
+{% endblock %}

@@ -13,12 +13,12 @@
       rel="stylesheet"
     >
     <link rel="icon" type="image/png" href="/static/icons/favicon.png">
-    <link rel="stylesheet" href="/static/css/app.css?v=26">
+    <link rel="stylesheet" href="/static/css/app.css?v=74">
   </head>
   <body>
     <div class="app-layout">
-      <aside class="sidebar">
-        <div class="brand">
+      <header class="topbar">
+        <a class="brand" href="/panel-pacjenta" aria-label="Portal Pacjenta">
           <div class="brand-mark">
             <img
               src="/static/icons/HospHeart.png"
@@ -28,83 +28,117 @@
             >
             <span class="brand-fallback">P</span>
           </div>
-          <p class="brand-title">Portal<br>Pacjenta</p>
-        </div>
+        </a>
 
-        <nav class="sidebar-nav">
-          <a class="sidebar-link {% if aktywna_strona == 'dashboard' %}active{% endif %}" href="/panel-pacjenta">
-            <span class="sidebar-icon">
-              <img src="/static/icons/dashboard.svg" alt="" class="sidebar-icon-img">
+        <nav class="topbar-nav" aria-label="Główna nawigacja">
+          <a class="topbar-link {% if aktywna_strona == 'dashboard' %}active{% endif %}" href="/panel-pacjenta">
+            <span class="topbar-icon">
+              <img src="/static/icons/dashboard.svg" alt="" class="topbar-icon-img">
             </span>
-            <span>Dashboard</span>
+            <span>Podsumowanie</span>
           </a>
-          <a class="sidebar-link {% if aktywna_strona == 'wizyty' %}active{% endif %}" href="/moje-wizyty">
-            <span class="sidebar-icon">
-              <img src="/static/icons/visits.svg" alt="" class="sidebar-icon-img">
+          <a class="topbar-link {% if aktywna_strona == 'wizyty' %}active{% endif %}" href="/moje-wizyty">
+            <span class="topbar-icon">
+              <img src="/static/icons/visits.svg" alt="" class="topbar-icon-img">
             </span>
             <span>Wizyty</span>
           </a>
-          <a class="sidebar-link {% if aktywna_strona == 'szybki_zapis' %}active{% endif %}" href="/szybki-zapis">
-            <span class="sidebar-icon">
-              <i class="bi bi-plus-lg sidebar-icon-bi" aria-hidden="true"></i>
+          <a class="topbar-link {% if aktywna_strona == 'szybki_zapis' %}active{% endif %}" href="/szybki-zapis">
+            <span class="topbar-icon">
+              <i class="bi bi-plus-lg topbar-icon-bi" aria-hidden="true"></i>
             </span>
             <span>Szybki zapis</span>
           </a>
-          <a class="sidebar-link {% if aktywna_strona == 'recepty' %}active{% endif %}" href="/recepty">
-            <span class="sidebar-icon">
-              <i class="bi bi-clipboard-pulse sidebar-icon-bi" aria-hidden="true"></i>
+          <a class="topbar-link {% if aktywna_strona == 'recepty' %}active{% endif %}" href="/recepty">
+            <span class="topbar-icon">
+              <i class="bi bi-clipboard-pulse topbar-icon-bi" aria-hidden="true"></i>
             </span>
             <span>Recepty</span>
           </a>
-          <a class="sidebar-link {% if aktywna_strona == 'lekarze' %}active{% endif %}" href="/lekarze-widok">
-            <span class="sidebar-icon">
-              <img src="/static/icons/doctors.svg" alt="" class="sidebar-icon-img">
+          <a class="topbar-link {% if aktywna_strona == 'lekarze' %}active{% endif %}" href="/lekarze-widok">
+            <span class="topbar-icon">
+              <img src="/static/icons/doctors.svg" alt="" class="topbar-icon-img">
             </span>
             <span>Lekarze</span>
           </a>
-          <a class="sidebar-link {% if aktywna_strona == 'apteki' %}active{% endif %}" href="/apteki">
-            <span class="sidebar-icon">
-              <img src="/static/icons/pharmacies.svg" alt="" class="sidebar-icon-img">
+          <a class="topbar-link {% if aktywna_strona == 'leki' %}active{% endif %}" href="/leki">
+            <span class="topbar-icon">
+              <i class="bi bi-capsule topbar-icon-bi" aria-hidden="true"></i>
             </span>
-            <span>Apteki</span>
+            <span>Leki</span>
           </a>
         </nav>
 
-        <div class="sidebar-divider"></div>
+        <div class="topbar-actions">
+          <button class="topbar-notification" type="button" aria-label="Powiadomienia" data-app-message="Masz 2 nowe powiadomienia: przypomnienie o wizycie i aktywną e-receptę.">
+            <i class="bi bi-bell" aria-hidden="true"></i>
+          </button>
 
-        <nav class="sidebar-nav sidebar-secondary">
-          <a class="sidebar-link {% if aktywna_strona == 'historia' %}active{% endif %}" href="/historia">
-            <span class="sidebar-icon">
-              <img src="/static/icons/history.svg" alt="" class="sidebar-icon-img">
-            </span>
-            <span>Historia</span>
-          </a>
-          <a class="sidebar-link {% if aktywna_strona == 'ustawienia' %}active{% endif %}" href="/ustawienia">
-            <span class="sidebar-icon">
-              <i class="bi bi-gear-wide-connected sidebar-icon-bi" aria-hidden="true"></i>
-            </span>
-            <span>Ustawienia</span>
-          </a>
-        </nav>
+          <details class="topbar-profile-menu">
+            <summary class="topbar-profile {% if aktywna_strona == 'profil' %}active{% endif %}">
+              <div class="profile-avatar">
+                {{ pacjent["imie"][0] }}{{ pacjent["nazwisko"][0] }}
+              </div>
+              <div>
+                <p class="profile-name">{{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}</p>
+                <p class="profile-role">Pacjent</p>
+              </div>
+              <i class="bi bi-chevron-down profile-menu-chevron" aria-hidden="true"></i>
+            </summary>
 
-        <div class="sidebar-profile">
-          <div class="profile-avatar">
-            {{ pacjent["imie"][0] }}{{ pacjent["nazwisko"][0] }}
-          </div>
-          <div>
-            <p class="profile-name">{{ pacjent["imie"] }} {{ pacjent["nazwisko"] }}</p>
-            <p class="profile-role">Pacjent</p>
-          </div>
+            <div class="profile-menu">
+              <a href="/profil">
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                Profil pacjenta
+              </a>
+              <a href="/ustawienia">
+                <i class="bi bi-gear" aria-hidden="true"></i>
+                Ustawienia
+              </a>
+              <a href="/historia">
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                Historia
+              </a>
+              <button type="button" data-app-message="Wylogowanie podepniemy po dodaniu logowania użytkownika.">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                Wyloguj
+              </button>
+            </div>
+          </details>
         </div>
-      </aside>
+      </header>
 
-      <main class="main-content">
+      <main class="main-content {% if aktywna_strona == 'dashboard' %}main-content-dashboard{% endif %}{% if aktywna_strona == 'wizyty' %} main-content-visits{% endif %}{% if aktywna_strona == 'szybki_zapis' %} main-content-booking{% endif %}{% if aktywna_strona == 'lekarze' %} main-content-doctors{% endif %}{% if aktywna_strona == 'leki' %} main-content-medicines{% endif %}{% if aktywna_strona == 'recepty' %} main-content-prescriptions{% endif %}">
         {% block content %}{% endblock %}
       </main>
+      <div class="app-toast" data-app-toast aria-live="polite"></div>
     </div>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     ></script>
+    <script>
+      window.showAppToast = function showAppToast(message) {
+        const toast = document.querySelector("[data-app-toast]");
+
+        if (!toast || !message) {
+          return;
+        }
+
+        toast.textContent = message;
+        toast.classList.add("visible");
+
+        window.clearTimeout(window.showAppToast.timeoutId);
+        window.showAppToast.timeoutId = window.setTimeout(() => {
+          toast.classList.remove("visible");
+        }, 2800);
+      };
+
+      document.querySelectorAll("[data-app-message]").forEach((element) => {
+        element.addEventListener("click", () => {
+          window.showAppToast(element.dataset.appMessage);
+        });
+      });
+    </script>
     {% block scripts %}{% endblock %}
   </body>
 </html>
