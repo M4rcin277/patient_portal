@@ -7,3 +7,8 @@ class NowaWizyta(BaseModel):
     data: str
     godzina: str
     notatka: str
+
+
+class PrzesuniecieWizyty(BaseModel):
+    data: str
+    godzina: str

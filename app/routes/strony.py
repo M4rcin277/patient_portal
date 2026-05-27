@@ -1,4 +1,8 @@
+from datetime import date, timedelta
+from urllib.parse import parse_qs
+
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.dane import (
@@ -12,16 +16,137 @@ from app.dane import (
     recepty_pacjenta,
 )
 from app.pomocnicy import (
+    formatuj_date_po_polsku,
     pobierz_nadchodzace_wizyty,
     pobierz_wizyty_pacjenta,
     przygotuj_historie_medyczna,
     przygotuj_kalendarz_wizyt,
+    termin_jest_zajety,
     znajdz_najblizsza_wizyte,
     znajdz_pacjenta,
+)
+from app.services.wizyty import (
+    BrakDostepuDoWizyty,
+    LekarzNieIstnieje,
+    NiepoprawnyTermin,
+    PacjentNieIstnieje,
+    TerminWPrzeszlosci,
+    TerminZajety,
+    WizytaNieaktywna,
+    WizytaNieIstnieje,
+    odwolaj_wizyte,
+    przesun_wizyte,
+    termin_jest_w_przeszlosci,
+    utworz_wizyte,
 )
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+STATUSY_WIZYT = {
+    "wizyta_dodana": ("sukces", "Wizyta została zapisana."),
+    "wizyta_odwolana": ("sukces", "Wizyta została odwołana."),
+    "wizyta_przesunieta": ("sukces", "Wizyta została przesunięta."),
+    "wizyta_nie_istnieje": ("blad", "Nie znaleziono wybranej wizyty."),
+    "brak_dostepu": ("blad", "Nie masz dostępu do tej wizyty."),
+    "wizyta_nieaktywna": ("blad", "Ta wizyta jest już nieaktywna."),
+    "termin_w_przeszlosci": ("blad", "Nie można wybrać terminu z przeszłości."),
+    "termin_zajety": ("blad", "Ten termin jest już zajęty. Wybierz inny termin."),
+    "niepoprawny_termin": ("blad", "Niepoprawny format daty lub godziny wizyty."),
+}
+
+
+def przygotuj_dostepne_terminy_szybkiego_zapisu():
+    dzisiaj = date.today()
+    przesuniecia_dni = [0, 1, 2, 3, 5]
+    dostepne_terminy = []
+
+    for indeks, lekarz in enumerate(lekarze):
+        for pozycja_dnia, przesuniecie in enumerate(przesuniecia_dni):
+            data_terminu = dzisiaj + timedelta(days=przesuniecie)
+            data_tekst = data_terminu.isoformat()
+            godzina = godziny_przyjec[
+                (indeks + pozycja_dnia) % len(godziny_przyjec)
+            ]
+
+            if termin_jest_w_przeszlosci(data_tekst, godzina):
+                continue
+
+            if termin_jest_zajety(lekarz["id"], data_tekst, godzina):
+                continue
+
+            if przesuniecie == 0:
+                dzien_etykieta = "Dzisiaj"
+                filtr_dnia = "dzis"
+            elif przesuniecie == 1:
+                dzien_etykieta = "Jutro"
+                filtr_dnia = "jutro"
+            elif przesuniecie == 2:
+                dzien_etykieta = "Pojutrze"
+                filtr_dnia = "tydzien"
+            else:
+                dzien_etykieta = formatuj_date_po_polsku(data_tekst)
+                filtr_dnia = "tydzien"
+
+            dostepne_terminy.append(
+                {
+                    "lekarz": lekarz,
+                    "data": data_tekst,
+                    "dzien_etykieta": dzien_etykieta,
+                    "data_etykieta": formatuj_date_po_polsku(data_tekst),
+                    "filtr_dnia": filtr_dnia,
+                    "godzina": godzina,
+                    "online": "Online" in lekarz.get("tryb_wizyty", ""),
+                }
+            )
+
+    return dostepne_terminy
+
+
+def przygotuj_kontekst_szybkiego_zapisu(blad: str | None = None):
+    pacjent_id = 1
+    pacjent = znajdz_pacjenta(pacjent_id)
+    kontekst = {
+        "pacjent": pacjent,
+        "aktywna_strona": "szybki_zapis",
+        "lekarze": lekarze,
+        "godziny_przyjec": godziny_przyjec,
+        "dostepne_terminy": przygotuj_dostepne_terminy_szybkiego_zapisu(),
+    }
+    kontekst["rekomendowane_terminy"] = kontekst["dostepne_terminy"][:3]
+    kontekst["najblizszy_dostepny_termin"] = (
+        kontekst["dostepne_terminy"][0] if kontekst["dostepne_terminy"] else None
+    )
+
+    if blad is not None:
+        kontekst["blad"] = blad
+
+    return kontekst
+
+
+def status_wizyty_z_wyjatku(wyjatek):
+    if isinstance(wyjatek, WizytaNieIstnieje):
+        return "wizyta_nie_istnieje"
+    if isinstance(wyjatek, BrakDostepuDoWizyty):
+        return "brak_dostepu"
+    if isinstance(wyjatek, WizytaNieaktywna):
+        return "wizyta_nieaktywna"
+    if isinstance(wyjatek, NiepoprawnyTermin):
+        return "niepoprawny_termin"
+    if isinstance(wyjatek, TerminWPrzeszlosci):
+        return "termin_w_przeszlosci"
+    if isinstance(wyjatek, TerminZajety):
+        return "termin_zajety"
+
+    return "niepoprawny_termin"
+
+
+def przekieruj_do_wizyt(status: str):
+    return RedirectResponse(
+        url=f"/moje-wizyty?status={status}",
+        status_code=303,
+    )
 
 
 @router.get("/panel-pacjenta")
@@ -104,6 +229,7 @@ def widok_moje_wizyty(
     request: Request,
     rok: int | None = None,
     miesiac: int | None = None,
+    status: str | None = None,
 ):
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id)
@@ -116,6 +242,17 @@ def widok_moje_wizyty(
         rok,
         miesiac,
     )
+    komunikat_sukcesu = None
+    komunikat_bledu = None
+    status_info = STATUSY_WIZYT.get(status)
+
+    if status_info:
+        typ_statusu, komunikat = status_info
+
+        if typ_statusu == "sukces":
+            komunikat_sukcesu = komunikat
+        else:
+            komunikat_bledu = komunikat
 
     return templates.TemplateResponse(
         request,
@@ -126,25 +263,117 @@ def widok_moje_wizyty(
             "nadchodzace_wizyty": nadchodzace_wizyty,
             "najblizsza_wizyta": najblizsza_wizyta,
             "kalendarz_wizyt": kalendarz_wizyt,
+            "komunikat_sukcesu": komunikat_sukcesu,
+            "komunikat_bledu": komunikat_bledu,
+            "godziny_przyjec": godziny_przyjec,
+            "dzisiejsza_data": date.today().isoformat(),
         },
     )
 
 
 @router.get("/szybki-zapis")
 def widok_szybki_zapis(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "szybki_zapis.html",
+        przygotuj_kontekst_szybkiego_zapisu(),
+    )
+
+
+@router.post("/szybki-zapis")
+async def zapisz_szybki_zapis(request: Request):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+
+    try:
+        lekarz_id = int(dane_formularza["lekarz_id"][0])
+        data = dane_formularza["data"][0].strip()
+        godzina = dane_formularza["godzina"][0].strip()
+    except (KeyError, IndexError, ValueError):
+        return templates.TemplateResponse(
+            request,
+            "szybki_zapis.html",
+            przygotuj_kontekst_szybkiego_zapisu(
+                "Nie udało się odczytać danych formularza."
+            ),
+            status_code=400,
+        )
+
+    try:
+        utworz_wizyte(
+            pacjent_id=pacjent_id,
+            lekarz_id=lekarz_id,
+            data=data,
+            godzina=godzina,
+            notatka="Wizyta umówiona przez szybki zapis",
+        )
+    except PacjentNieIstnieje:
+        blad = "Nie znaleziono pacjenta."
+    except LekarzNieIstnieje:
+        blad = "Wybrany lekarz nie istnieje."
+    except NiepoprawnyTermin:
+        blad = "Niepoprawny format daty lub godziny wizyty."
+    except TerminWPrzeszlosci:
+        blad = "Nie można umówić wizyty w przeszłości."
+    except TerminZajety:
+        blad = "Ten termin jest już zajęty. Wybierz inny termin."
+    else:
+        return przekieruj_do_wizyt("wizyta_dodana")
 
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        {
-            "pacjent": pacjent,
-            "aktywna_strona": "szybki_zapis",
-            "lekarze": lekarze,
-            "godziny_przyjec": godziny_przyjec,
-        },
+        przygotuj_kontekst_szybkiego_zapisu(blad),
+        status_code=400,
     )
+
+
+@router.post("/moje-wizyty/{wizyta_id}/odwolaj")
+async def odwolaj_wizyte_html(wizyta_id: int):
+    pacjent_id = 1
+
+    try:
+        odwolaj_wizyte(wizyta_id, pacjent_id)
+    except (
+        WizytaNieIstnieje,
+        BrakDostepuDoWizyty,
+        WizytaNieaktywna,
+        TerminWPrzeszlosci,
+    ) as blad:
+        return przekieruj_do_wizyt(status_wizyty_z_wyjatku(blad))
+
+    return przekieruj_do_wizyt("wizyta_odwolana")
+
+
+@router.post("/moje-wizyty/{wizyta_id}/przesun")
+async def przesun_wizyte_html(wizyta_id: int, request: Request):
+    pacjent_id = 1
+    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+
+    try:
+        data = dane_formularza["data"][0].strip()
+        godzina = dane_formularza["godzina"][0].strip()
+    except (KeyError, IndexError):
+        return przekieruj_do_wizyt("niepoprawny_termin")
+
+    try:
+        przesun_wizyte(
+            wizyta_id=wizyta_id,
+            pacjent_id=pacjent_id,
+            data=data,
+            godzina=godzina,
+        )
+    except (
+        WizytaNieIstnieje,
+        BrakDostepuDoWizyty,
+        WizytaNieaktywna,
+        NiepoprawnyTermin,
+        TerminWPrzeszlosci,
+        TerminZajety,
+    ) as blad:
+        return przekieruj_do_wizyt(status_wizyty_z_wyjatku(blad))
+
+    return przekieruj_do_wizyt("wizyta_przesunieta")
 
 
 @router.get("/recepty")

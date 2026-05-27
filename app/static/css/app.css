@@ -365,6 +365,36 @@ body {
   font-size: 13px;
 }
 
+.page-success-alert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -2px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  color: #047857;
+  background: #f0fdf4;
+  font-size: 13px;
+  font-weight: 850;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -2px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #ffd6dd;
+  border-radius: 10px;
+  color: #be123c;
+  background: #fff5f7;
+  font-size: 13px;
+  font-weight: 850;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
 .page-action {
   display: inline-flex;
   align-items: center;
@@ -1031,6 +1061,43 @@ body {
 
 .appointment-danger-action:hover {
   background: #fff5f7;
+}
+
+.appointment-inline-form {
+  display: contents;
+}
+
+.appointment-reschedule-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #e8eef7;
+  border-radius: 12px;
+  background: #fbfcff;
+}
+
+.appointment-reschedule-form label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.appointment-reschedule-form input,
+.appointment-reschedule-form select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid #dbe5f5;
+  border-radius: 8px;
+  color: var(--text-dark);
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .appointments-panel-list {
@@ -1739,6 +1806,26 @@ body {
   box-shadow: 0 18px 34px rgba(5, 20, 45, 0.14);
 }
 
+.booking-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid #ffd6dd;
+  border-radius: 10px;
+  color: #be123c;
+  background: #fff5f7;
+  font-size: 13px;
+  font-weight: 850;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+[data-auto-dismiss-alert].is-hiding {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .booking-hero h2 {
   margin: 0 0 6px;
   font-size: 22px;
@@ -1930,6 +2017,15 @@ body {
   background: var(--accent);
   font-size: 12px;
   font-weight: 800;
+}
+
+.slot-book-form {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.slot-book-form .slot-book-button {
+  width: 100%;
 }
 
 .booking-slot-filters {
@@ -2140,6 +2236,12 @@ body {
   font-weight: 800;
 }
 
+.booking-next-slot-form,
+.recommended-slot-form {
+  display: grid;
+  align-self: end;
+}
+
 .section-caption {
   margin: 4px 0 0;
   color: var(--text-muted);
@@ -2187,6 +2289,7 @@ body {
 }
 
 .recommended-slot span,
+.recommended-slot small,
 .booking-contact-card span {
   color: var(--text-muted);
   font-size: 12px;

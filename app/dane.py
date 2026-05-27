@@ -28,6 +28,7 @@ lekarze = [
         "specjalizacja": "Kardiolog",
         "miasto": "Warszawa",
         "lokalizacja": "Centrum Medyczne Zdrowie, Warszawa",
+        "tryb_wizyty": "Stacjonarna, Online",
     },
     {
         "id": 2,
@@ -36,6 +37,25 @@ lekarze = [
         "specjalizacja": "Dermatolog",
         "miasto": "Krakow",
         "lokalizacja": "Przychodnia Derm-Med, Kraków",
+        "tryb_wizyty": "Stacjonarna",
+    },
+    {
+        "id": 3,
+        "imie": "Michał",
+        "nazwisko": "Wiśniewski",
+        "specjalizacja": "Ortopeda",
+        "miasto": "Warszawa",
+        "lokalizacja": "Centrum Ortopedyczne, Warszawa",
+        "tryb_wizyty": "Stacjonarna",
+    },
+    {
+        "id": 4,
+        "imie": "Karolina",
+        "nazwisko": "Maj",
+        "specjalizacja": "Internista",
+        "miasto": "Warszawa",
+        "lokalizacja": "Centrum Medyczne Zdrowie, Warszawa",
+        "tryb_wizyty": "Stacjonarna, Online",
     },
 ]
 
