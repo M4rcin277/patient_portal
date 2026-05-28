@@ -49,10 +49,15 @@
     </p>
 
     <div class="next-visit-footer">
-      <a class="visit-action" href="/moje-wizyty">
+      <button
+        class="visit-action"
+        type="button"
+        data-bs-toggle="modal"
+        data-bs-target="#dashboardVisitModal{{ najblizsza_wizyta['id'] }}"
+      >
         Zobacz szczegóły wizyty
         <i class="bi bi-arrow-right" aria-hidden="true"></i>
-      </a>
+      </button>
       {% if kolejna_wizyta %}
       <div class="next-visit-followup">
         <span class="next-visit-followup-label">Następna</span>
@@ -201,6 +206,103 @@
   </article>
   {% endfor %}
 </section>
+
+{% if najblizsza_wizyta %}
+<div
+  class="modal fade"
+  id="dashboardVisitModal{{ najblizsza_wizyta['id'] }}"
+  tabindex="-1"
+  aria-labelledby="dashboardVisitModalLabel{{ najblizsza_wizyta['id'] }}"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Szczegóły wizyty</p>
+          <h2 class="modal-title fs-5" id="dashboardVisitModalLabel{{ najblizsza_wizyta['id'] }}">
+            {{ najblizsza_wizyta["specjalizacja"] }}
+          </h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="appointment-modal-doctor">
+          <div class="directory-icon">
+            <i class="bi bi-person-badge" aria-hidden="true"></i>
+          </div>
+          <div>
+            <strong>{{ najblizsza_wizyta["lekarz"] }}</strong>
+            <span>{{ najblizsza_wizyta["lokalizacja"] }}</span>
+          </div>
+        </div>
+
+        <div class="appointment-modal-grid">
+          <div>
+            <span>Data</span>
+            <strong>{{ najblizsza_wizyta["data_czytelna"] }}</strong>
+          </div>
+          <div>
+            <span>Godzina</span>
+            <strong>{{ najblizsza_wizyta["godzina"] }}</strong>
+          </div>
+          <div>
+            <span>Status</span>
+            <strong>{{ najblizsza_wizyta["status"] }}</strong>
+          </div>
+          <div>
+            <span>Numer wizyty</span>
+            <strong>#{{ najblizsza_wizyta["id"] }}</strong>
+          </div>
+        </div>
+
+        <div class="appointment-modal-note">
+          <span>Notatka</span>
+          <p>{{ najblizsza_wizyta["notatka"] }}</p>
+        </div>
+
+        <form class="appointment-reschedule-form" method="post" action="/moje-wizyty/{{ najblizsza_wizyta['id'] }}/przesun">
+          <div>
+            <label for="dashboardDataPrzesuniecia{{ najblizsza_wizyta['id'] }}">Nowa data</label>
+            <input
+              id="dashboardDataPrzesuniecia{{ najblizsza_wizyta['id'] }}"
+              type="date"
+              name="data"
+              value="{{ najblizsza_wizyta['data'] }}"
+              min="{{ dzisiejsza_data }}"
+              required
+            >
+          </div>
+          <div>
+            <label for="dashboardGodzinaPrzesuniecia{{ najblizsza_wizyta['id'] }}">Nowa godzina</label>
+            <select id="dashboardGodzinaPrzesuniecia{{ najblizsza_wizyta['id'] }}" name="godzina" required>
+              {% for godzina in godziny_przyjec %}
+              <option value="{{ godzina }}" {% if godzina == najblizsza_wizyta["godzina"] %}selected{% endif %}>
+                {{ godzina }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="appointment-secondary-action" type="submit">
+            <i class="bi bi-calendar-event" aria-hidden="true"></i>
+            Przenieś wizytę
+          </button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+        <form class="appointment-inline-form" method="post" action="/moje-wizyty/{{ najblizsza_wizyta['id'] }}/odwolaj">
+          <button class="appointment-danger-action" type="submit" data-confirm-action="Czy na pewno odwołać tę wizytę?">
+            <i class="bi bi-trash" aria-hidden="true"></i>
+            Odwołaj wizytę
+          </button>
+        </form>
+        <a class="modal-primary-button" href="/szybki-zapis">Umów kolejną</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
