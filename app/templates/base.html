@@ -13,7 +13,7 @@
       rel="stylesheet"
     >
     <link rel="icon" type="image/png" href="/static/icons/favicon.png">
-    <link rel="stylesheet" href="/static/css/app.css?v=74">
+    <link rel="stylesheet" href="/static/css/app.css?v=79">
   </head>
   <body>
     <div class="app-layout">
@@ -137,6 +137,24 @@
         element.addEventListener("click", () => {
           window.showAppToast(element.dataset.appMessage);
         });
+      });
+
+      document.querySelectorAll("[data-confirm-action]").forEach((element) => {
+        element.addEventListener("click", (event) => {
+          if (!window.confirm(element.dataset.confirmAction)) {
+            event.preventDefault();
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-auto-dismiss-alert]").forEach((alert) => {
+        window.setTimeout(() => {
+          alert.classList.add("is-hiding");
+
+          window.setTimeout(() => {
+            alert.remove();
+          }, 240);
+        }, 5000);
       });
     </script>
     {% block scripts %}{% endblock %}

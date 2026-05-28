@@ -117,7 +117,7 @@ def pobierz_wizyty_pacjenta(pacjent_id: int):
     wizyty_pacjenta = []
 
     for wizyta in wizyty:
-        if wizyta["pacjent_id"] == pacjent_id:
+        if wizyta["pacjent_id"] == pacjent_id and wizyta["status"] != "odwolana":
             wizyty_pacjenta.append(przygotuj_wizyte_dla_pacjenta(wizyta))
 
     return wizyty_pacjenta
@@ -258,7 +258,11 @@ def przygotuj_kalendarz_wizyt(
 def pobierz_wolne_godziny(lekarz_id: int, data: str):
     zajete_godziny = []
     for wizyta in wizyty:
-        if wizyta["lekarz_id"] == lekarz_id and wizyta["data"] == data:
+        if (
+            wizyta["lekarz_id"] == lekarz_id
+            and wizyta["data"] == data
+            and wizyta["status"] != "odwolana"
+        ):
             zajete_godziny.append(wizyta["godzina"])
 
     wolne_godziny = []
@@ -270,12 +274,19 @@ def pobierz_wolne_godziny(lekarz_id: int, data: str):
     return wolne_godziny
 
 
-def termin_jest_zajety(lekarz_id: int, data: str, godzina: str):
+def termin_jest_zajety(
+    lekarz_id: int,
+    data: str,
+    godzina: str,
+    pomin_wizyte_id: int | None = None,
+):
     for wizyta in wizyty:
         if (
-            wizyta["lekarz_id"] == lekarz_id
+            wizyta["id"] != pomin_wizyte_id
+            and wizyta["lekarz_id"] == lekarz_id
             and wizyta["data"] == data
             and wizyta["godzina"] == godzina
+            and wizyta["status"] != "odwolana"
         ):
             return True
 

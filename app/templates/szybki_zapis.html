@@ -22,6 +22,13 @@
   </div>
 </section>
 
+{% if blad %}
+<div class="booking-alert" role="alert" data-auto-dismiss-alert>
+  <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+  {{ blad }}
+</div>
+{% endif %}
+
 <section class="section-card recommended-slots-card">
   <div class="section-card-header">
     <div>
@@ -31,30 +38,26 @@
   </div>
 
   <div class="recommended-slots-grid">
+    {% for termin in rekomendowane_terminy %}
     <article class="recommended-slot">
-      <i class="bi bi-heart-pulse" aria-hidden="true"></i>
-      <strong>Kardiolog</strong>
-      <span>Dzisiaj, 17:30</span>
-      <button type="button" data-booking-quick>Szybki zapis</button>
+      <i class="bi bi-calendar-heart" aria-hidden="true"></i>
+      <strong>{{ termin["lekarz"]["specjalizacja"] }}</strong>
+      <span>{{ termin["dzien_etykieta"] }}, {{ termin["godzina"] }}</span>
+      <small>{{ termin["lekarz"]["imie"] }} {{ termin["lekarz"]["nazwisko"] }}</small>
+      <form class="recommended-slot-form" method="post" action="/szybki-zapis">
+        <input type="hidden" name="lekarz_id" value="{{ termin['lekarz']['id'] }}">
+        <input type="hidden" name="data" value="{{ termin['data'] }}">
+        <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
+        <button type="submit">Szybki zapis</button>
+      </form>
     </article>
-    <article class="recommended-slot">
-      <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
-      <strong>Dermatolog</strong>
-      <span>Jutro, 11:45</span>
-      <button type="button" data-booking-quick>Szybki zapis</button>
-    </article>
-    <article class="recommended-slot">
-      <i class="bi bi-stethoscope" aria-hidden="true"></i>
-      <strong>Internista</strong>
-      <span>Pojutrze, 10:20</span>
-      <button type="button" data-booking-quick>Szybki zapis</button>
-    </article>
+    {% endfor %}
     <article class="booking-contact-card">
       <strong>Potrzebujesz pomocy?</strong>
       <span>Nasi konsultanci są dostępni w dni robocze.</span>
-      <button type="button" data-app-message="Telefoniczny kontakt z konsultantem podepniemy po dodaniu danych placówki.">
+      <button type="button" data-app-message="Konsultant oddzwoni w najbliższym dniu roboczym.">
         <i class="bi bi-headset" aria-hidden="true"></i>
-        Zadzwoń teraz
+        Poproś o kontakt
       </button>
     </article>
   </div>
@@ -102,43 +105,48 @@
       </div>
 
       <div class="booking-slots-list">
-        {% for lekarz in lekarze %}
+        {% for termin in dostepne_terminy %}
         <article
           class="booking-slot"
-          data-miasto="{{ lekarz['miasto'] }}"
-          data-specjalizacja="{{ lekarz['specjalizacja'] }}"
+          data-miasto="{{ termin['lekarz']['miasto'] }}"
+          data-specjalizacja="{{ termin['lekarz']['specjalizacja'] }}"
+          data-dzien="{{ termin['filtr_dnia'] }}"
+          data-online="{{ 'true' if termin['online'] else 'false' }}"
         >
           <div class="slot-date">
-            <span>{% if loop.first %}Dzisiaj{% else %}Jutro{% endif %}</span>
-            <strong>{{ godziny_przyjec[loop.index0] }}</strong>
-            <small>{% if loop.first %}10 czerwca{% else %}11 czerwca{% endif %}</small>
+            <span>{{ termin["dzien_etykieta"] }}</span>
+            <strong>{{ termin["godzina"] }}</strong>
+            <small>{{ termin["data_etykieta"] }}</small>
           </div>
           <div class="slot-doctor-avatar">
-            {{ lekarz["imie"][0] }}{{ lekarz["nazwisko"][0] }}
+            {{ termin["lekarz"]["imie"][0] }}{{ termin["lekarz"]["nazwisko"][0] }}
           </div>
           <div class="slot-main">
-            <strong>{{ lekarz["imie"] }} {{ lekarz["nazwisko"] }}</strong>
-            <span>{{ lekarz["specjalizacja"] }}</span>
-            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ lekarz["lokalizacja"] }}</small>
+            <strong>{{ termin["lekarz"]["imie"] }} {{ termin["lekarz"]["nazwisko"] }}</strong>
+            <span>{{ termin["lekarz"]["specjalizacja"] }}</span>
+            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ termin["lekarz"]["lokalizacja"] }}</small>
+            <small><i class="bi bi-camera-video" aria-hidden="true"></i> {{ termin["lekarz"]["tryb_wizyty"] }}</small>
           </div>
-          <button class="slot-book-button" type="button">Zarezerwuj</button>
+          <form class="slot-book-form" method="post" action="/szybki-zapis">
+            <input type="hidden" name="lekarz_id" value="{{ termin['lekarz']['id'] }}">
+            <input type="hidden" name="data" value="{{ termin['data'] }}">
+            <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
+            <button class="slot-book-button" type="submit">Zarezerwuj</button>
+          </form>
         </article>
+        {% else %}
+        <div class="empty-page-state compact">
+          <i class="bi bi-calendar-x" aria-hidden="true"></i>
+          <strong>Brak wolnych terminów</strong>
+          <span>Spróbuj zmienić specjalizację, lokalizację albo dzień wizyty.</span>
+        </div>
         {% endfor %}
 
-        <article class="booking-slot" data-miasto="Warszawa" data-specjalizacja="Internista">
-          <div class="slot-date">
-            <span>Pojutrze</span>
-            <strong>09:15</strong>
-            <small>12 czerwca</small>
-          </div>
-          <div class="slot-doctor-avatar warm">MZ</div>
-          <div class="slot-main">
-            <strong>Marta Zielińska</strong>
-            <span>Internista</span>
-            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> Centrum Medyczne Zdrowie</small>
-          </div>
-          <button class="slot-book-button" type="button">Zarezerwuj</button>
-        </article>
+        <div class="empty-page-state compact booking-filter-empty" hidden>
+          <i class="bi bi-calendar-x" aria-hidden="true"></i>
+          <strong>Brak terminów dla wybranych filtrów</strong>
+          <span>Zmień specjalizację, dzień albo lokalizację.</span>
+        </div>
       </div>
     </section>
   </div>
@@ -211,10 +219,25 @@
       </div>
 
       <div class="booking-next-slot">
+        {% if najblizszy_dostepny_termin %}
         <span>Najbliższy dostępny termin</span>
-        <strong>Kardiolog - dziś, 17:30</strong>
-        <small>Centrum Medyczne Zdrowie</small>
-        <button type="button" data-booking-quick>Zarezerwuj teraz</button>
+        <strong>
+          {{ najblizszy_dostepny_termin["lekarz"]["specjalizacja"] }}
+          - {{ najblizszy_dostepny_termin["dzien_etykieta"] }},
+          {{ najblizszy_dostepny_termin["godzina"] }}
+        </strong>
+        <small>{{ najblizszy_dostepny_termin["lekarz"]["lokalizacja"] }}</small>
+        <form class="booking-next-slot-form" method="post" action="/szybki-zapis">
+          <input type="hidden" name="lekarz_id" value="{{ najblizszy_dostepny_termin['lekarz']['id'] }}">
+          <input type="hidden" name="data" value="{{ najblizszy_dostepny_termin['data'] }}">
+          <input type="hidden" name="godzina" value="{{ najblizszy_dostepny_termin['godzina'] }}">
+          <button type="submit">Zarezerwuj teraz</button>
+        </form>
+        {% else %}
+        <span>Najbliższy dostępny termin</span>
+        <strong>Brak wolnych terminów</strong>
+        <small>Spróbuj zmienić filtr lub wrócić później.</small>
+        {% endif %}
       </div>
     </section>
   </aside>
@@ -227,22 +250,39 @@
   const cityFilter = document.querySelector("#booking-city-filter");
   const specialtyOptions = document.querySelectorAll(".specialty-option");
   const bookingSlots = document.querySelectorAll(".booking-slot");
+  const emptyFilterState = document.querySelector(".booking-filter-empty");
   let selectedSpecialty = "Kardiolog";
+  let selectedDay = "dzis";
 
   function updateVisibleSlots() {
     const selectedCity = locationSelect.value;
     const shouldFilterByCity = cityFilter.checked;
+    let visibleSlotsCount = 0;
 
     bookingSlots.forEach((slot) => {
       const slotCity = slot.dataset.miasto;
       const slotSpecialty = slot.dataset.specjalizacja;
+      const slotDay = slot.dataset.dzien;
+      const slotIsOnline = slot.dataset.online === "true";
       const matchesCity = !shouldFilterByCity || slotCity === selectedCity;
       const matchesSpecialty =
         selectedSpecialty === "all" || slotSpecialty === selectedSpecialty;
-      const shouldShowSlot = matchesCity && matchesSpecialty;
+      const matchesDay =
+        selectedDay === "all" ||
+        slotDay === selectedDay ||
+        (selectedDay === "online" && slotIsOnline);
+      const shouldShowSlot = matchesCity && matchesSpecialty && matchesDay;
 
       slot.hidden = !shouldShowSlot;
+
+      if (shouldShowSlot) {
+        visibleSlotsCount += 1;
+      }
     });
+
+    if (emptyFilterState) {
+      emptyFilterState.hidden = visibleSlotsCount > 0;
+    }
   }
 
   specialtyOptions.forEach((option) => {
@@ -268,15 +308,30 @@
       });
 
       button.classList.add("active");
-      window.showAppToast?.(`Wybrano filtr terminów: ${button.textContent.trim()}.`);
+      const buttonText = button.textContent.trim();
+
+      if (buttonText === "Dziś") {
+        selectedDay = "dzis";
+      } else if (buttonText === "Jutro") {
+        selectedDay = "jutro";
+      } else if (buttonText === "Online") {
+        selectedDay = "online";
+      } else {
+        selectedDay = "all";
+      }
+
+      updateVisibleSlots();
     });
   });
 
-  document.querySelectorAll(".slot-book-button, [data-booking-quick]").forEach((button) => {
-    button.addEventListener("click", () => {
-      button.textContent = "Wybrano";
-      button.disabled = true;
-      window.showAppToast?.("Termin wybrany lokalnie. W kolejnym kroku wyślemy go formularzem POST.");
+  document.querySelectorAll(".slot-book-form, .recommended-slot-form, .booking-next-slot-form").forEach((form) => {
+    form.addEventListener("submit", () => {
+      const button = form.querySelector("button");
+
+      if (button) {
+        button.textContent = "Rezerwuję...";
+        button.disabled = true;
+      }
     });
   });
 </script>
