@@ -50,6 +50,10 @@
         <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
         <button type="submit">Szybki zapis</button>
       </form>
+      <a class="recommended-more-link" href="/szybki-zapis?lekarz_id={{ termin['lekarz']['id'] }}">
+        Więcej terminów
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
     </article>
     {% endfor %}
     <article class="booking-contact-card">
@@ -86,7 +90,13 @@
           <i class="bi bi-bandaid" aria-hidden="true"></i>
           <span>Ortopeda</span>
         </button>
-        <button class="specialty-option" type="button" data-specialty="all">
+        <button
+          class="specialty-option"
+          type="button"
+          data-specialty-more
+          data-bs-toggle="modal"
+          data-bs-target="#bookingSpecialtiesModal"
+        >
           <i class="bi bi-three-dots" aria-hidden="true"></i>
           <span>Więcej</span>
         </button>
@@ -97,10 +107,11 @@
       <div class="section-card-header">
         <h2 class="section-title">Dostępne terminy</h2>
         <div class="booking-slot-filters" aria-label="Filtry terminów">
-          <button class="active" type="button" data-booking-day>Dziś</button>
-          <button type="button" data-booking-day>Jutro</button>
-          <button type="button" data-booking-day>Ten tydzień</button>
-          <button type="button" data-booking-day><i class="bi bi-camera-video" aria-hidden="true"></i> Online</button>
+          <button class="active" type="button" data-booking-day="dzisiaj">Dzisiaj</button>
+          <button type="button" data-booking-day="tydzien">Ten tydzień</button>
+          <button type="button" data-booking-day="miesiac">Ten miesiąc</button>
+          <button type="button" data-booking-day="ponad_miesiac">Ponad miesiąc</button>
+          <button type="button" data-booking-day="online"><i class="bi bi-camera-video" aria-hidden="true"></i> Online</button>
         </div>
       </div>
 
@@ -132,6 +143,9 @@
             <input type="hidden" name="data" value="{{ termin['data'] }}">
             <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
             <button class="slot-book-button" type="submit">Zarezerwuj</button>
+            <a class="slot-more-link" href="/szybki-zapis?lekarz_id={{ termin['lekarz']['id'] }}">
+              Więcej terminów
+            </a>
           </form>
         </article>
         {% else %}
@@ -233,6 +247,10 @@
           <input type="hidden" name="godzina" value="{{ najblizszy_dostepny_termin['godzina'] }}">
           <button type="submit">Zarezerwuj teraz</button>
         </form>
+        <a class="recommended-more-link" href="/szybki-zapis?lekarz_id={{ najblizszy_dostepny_termin['lekarz']['id'] }}">
+          Więcej terminów
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
         {% else %}
         <span>Najbliższy dostępny termin</span>
         <strong>Brak wolnych terminów</strong>
@@ -242,6 +260,129 @@
     </section>
   </aside>
 </section>
+
+<div
+  class="modal fade"
+  id="bookingSpecialtiesModal"
+  tabindex="-1"
+  aria-labelledby="bookingSpecialtiesModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal doctor-filters-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Specjalizacje</p>
+          <h2 class="modal-title fs-5" id="bookingSpecialtiesModalLabel">Wybierz specjalizacje</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="doctor-filter-groups">
+          <section>
+            <h3>Dostępne specjalizacje</h3>
+            <label><input type="checkbox" value="Kardiolog" data-booking-specialty-filter checked> Kardiolog</label>
+            <label><input type="checkbox" value="Dermatolog" data-booking-specialty-filter> Dermatolog</label>
+            <label><input type="checkbox" value="Internista" data-booking-specialty-filter> Internista</label>
+            <label><input type="checkbox" value="Ortopeda" data-booking-specialty-filter> Ortopeda</label>
+          </section>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-secondary-button" type="button" data-clear-booking-specialties>Wyczyść</button>
+        <button class="modal-primary-button" type="button" data-bs-dismiss="modal" data-apply-booking-specialties>
+          Zastosuj
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if wybrany_lekarz %}
+<div
+  class="modal fade"
+  id="bookingDoctorTermsModal"
+  tabindex="-1"
+  aria-labelledby="bookingDoctorTermsModalLabel"
+  aria-hidden="true"
+  data-auto-open-modal
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content appointment-modal doctor-booking-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Więcej terminów</p>
+          <h2 class="modal-title fs-5" id="bookingDoctorTermsModalLabel">
+            lek. {{ wybrany_lekarz["imie"] }} {{ wybrany_lekarz["nazwisko"] }}
+          </h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="appointment-modal-doctor">
+          <div class="directory-icon">
+            <i class="bi bi-person-badge" aria-hidden="true"></i>
+          </div>
+          <div>
+            <strong>{{ wybrany_lekarz["specjalizacja"] }}</strong>
+            <span>{{ wybrany_lekarz["lokalizacja"] }}</span>
+          </div>
+        </div>
+
+        <label class="form-field booking-date-picker">
+          <span>Wybierz datę wizyty</span>
+          <input
+            type="date"
+            value="{{ minimalna_data_rezerwacji }}"
+            min="{{ minimalna_data_rezerwacji }}"
+            max="{{ maksymalna_data_rezerwacji }}"
+            data-doctor-terms-date
+          >
+        </label>
+
+        <div class="doctor-booking-slots doctor-extended-slots">
+          {% for termin in terminy_wybranego_lekarza %}
+          <form
+            class="doctor-booking-slot"
+            method="post"
+            action="/szybki-zapis"
+            data-doctor-term-date="{{ termin['data'] }}"
+          >
+            <input type="hidden" name="lekarz_id" value="{{ wybrany_lekarz['id'] }}">
+            <input type="hidden" name="data" value="{{ termin['data'] }}">
+            <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
+            <div>
+              <strong>{{ termin["godzina"] }}</strong>
+              <span>{{ termin["data_etykieta"] }}</span>
+              <small>{{ termin["dzien_etykieta"] }}</small>
+            </div>
+            <button type="submit">
+              Umów wizytę
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+          </form>
+          {% else %}
+          <div class="empty-page-state compact">
+            <i class="bi bi-calendar-x" aria-hidden="true"></i>
+            <strong>Brak wolnych terminów</strong>
+            <span>Ten lekarz nie ma wolnych godzin w najbliższych 3 miesiącach.</span>
+          </div>
+          {% endfor %}
+
+          <div class="empty-page-state compact doctor-date-empty" hidden>
+            <i class="bi bi-calendar-x" aria-hidden="true"></i>
+            <strong>Brak godzin w wybranym dniu</strong>
+            <span>Wybierz inną datę w zakresie najbliższych 3 miesięcy.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -251,8 +392,41 @@
   const specialtyOptions = document.querySelectorAll(".specialty-option");
   const bookingSlots = document.querySelectorAll(".booking-slot");
   const emptyFilterState = document.querySelector(".booking-filter-empty");
-  let selectedSpecialty = "Kardiolog";
-  let selectedDay = "dzis";
+  const autoOpenModal = document.querySelector("[data-auto-open-modal]");
+  const doctorTermsDate = document.querySelector("[data-doctor-terms-date]");
+  const doctorTermForms = document.querySelectorAll("[data-doctor-term-date]");
+  const doctorDateEmpty = document.querySelector(".doctor-date-empty");
+  const bookingSpecialtyCheckboxes = document.querySelectorAll("[data-booking-specialty-filter]");
+  const applyBookingSpecialtiesButton = document.querySelector("[data-apply-booking-specialties]");
+  const clearBookingSpecialtiesButton = document.querySelector("[data-clear-booking-specialties]");
+  let selectedSpecialties = ["Kardiolog"];
+  let selectedDay = "dzisiaj";
+
+  function getSelectedBookingSpecialties() {
+    return Array.from(bookingSpecialtyCheckboxes)
+      .filter((checkbox) => checkbox.checked)
+      .map((checkbox) => checkbox.value);
+  }
+
+  function setSelectedBookingSpecialties(specialties) {
+    selectedSpecialties = specialties;
+
+    bookingSpecialtyCheckboxes.forEach((checkbox) => {
+      checkbox.checked = selectedSpecialties.includes(checkbox.value);
+    });
+
+    specialtyOptions.forEach((option) => {
+      const optionSpecialty = option.dataset.specialty;
+      const isRegularSpecialty = Boolean(optionSpecialty);
+      const isMoreOption = option.hasAttribute("data-specialty-more");
+
+      option.classList.toggle(
+        "active",
+        (isRegularSpecialty && selectedSpecialties.length === 1 && selectedSpecialties[0] === optionSpecialty) ||
+          (isMoreOption && selectedSpecialties.length !== 1)
+      );
+    });
+  }
 
   function updateVisibleSlots() {
     const selectedCity = locationSelect.value;
@@ -266,7 +440,7 @@
       const slotIsOnline = slot.dataset.online === "true";
       const matchesCity = !shouldFilterByCity || slotCity === selectedCity;
       const matchesSpecialty =
-        selectedSpecialty === "all" || slotSpecialty === selectedSpecialty;
+        selectedSpecialties.length === 0 || selectedSpecialties.includes(slotSpecialty);
       const matchesDay =
         selectedDay === "all" ||
         slotDay === selectedDay ||
@@ -287,18 +461,28 @@
 
   specialtyOptions.forEach((option) => {
     option.addEventListener("click", () => {
-      selectedSpecialty = option.dataset.specialty;
+      if (option.hasAttribute("data-specialty-more")) {
+        return;
+      }
 
-      specialtyOptions.forEach((item) => {
-        item.classList.toggle("active", item === option);
-      });
-
+      setSelectedBookingSpecialties([option.dataset.specialty]);
       updateVisibleSlots();
     });
   });
 
+  applyBookingSpecialtiesButton?.addEventListener("click", () => {
+    setSelectedBookingSpecialties(getSelectedBookingSpecialties());
+    updateVisibleSlots();
+  });
+
+  clearBookingSpecialtiesButton?.addEventListener("click", () => {
+    setSelectedBookingSpecialties([]);
+    updateVisibleSlots();
+  });
+
   locationSelect.addEventListener("change", updateVisibleSlots);
   cityFilter.addEventListener("change", updateVisibleSlots);
+  setSelectedBookingSpecialties(selectedSpecialties);
   updateVisibleSlots();
 
   document.querySelectorAll("[data-booking-day]").forEach((button) => {
@@ -308,23 +492,46 @@
       });
 
       button.classList.add("active");
-      const buttonText = button.textContent.trim();
-
-      if (buttonText === "Dziś") {
-        selectedDay = "dzis";
-      } else if (buttonText === "Jutro") {
-        selectedDay = "jutro";
-      } else if (buttonText === "Online") {
-        selectedDay = "online";
-      } else {
-        selectedDay = "all";
-      }
+      selectedDay = button.dataset.bookingDay;
 
       updateVisibleSlots();
     });
   });
 
-  document.querySelectorAll(".slot-book-form, .recommended-slot-form, .booking-next-slot-form").forEach((form) => {
+  function updateDoctorTermsByDate() {
+    if (!doctorTermsDate || doctorTermForms.length === 0) {
+      return;
+    }
+
+    const selectedDate = doctorTermsDate.value;
+    let visibleTermsCount = 0;
+
+    doctorTermForms.forEach((form) => {
+      const shouldShow = form.dataset.doctorTermDate === selectedDate;
+      form.hidden = !shouldShow;
+
+      if (shouldShow) {
+        visibleTermsCount += 1;
+      }
+    });
+
+    if (doctorDateEmpty) {
+      doctorDateEmpty.hidden = visibleTermsCount > 0;
+    }
+  }
+
+  if (doctorTermsDate && doctorTermForms.length > 0) {
+    doctorTermsDate.value = doctorTermForms[0].dataset.doctorTermDate;
+    doctorTermsDate.addEventListener("change", updateDoctorTermsByDate);
+    updateDoctorTermsByDate();
+  }
+
+  if (autoOpenModal && window.bootstrap) {
+    const modal = new bootstrap.Modal(autoOpenModal);
+    modal.show();
+  }
+
+  document.querySelectorAll(".slot-book-form, .recommended-slot-form, .booking-next-slot-form, .doctor-booking-slot").forEach((form) => {
     form.addEventListener("submit", () => {
       const button = form.querySelector("button");
 

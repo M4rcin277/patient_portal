@@ -21,41 +21,48 @@
         <i class="bi bi-search" aria-hidden="true"></i>
         <input type="search" placeholder="Wyszukaj lekarza, specjalizację lub placówkę...">
       </label>
-      <button class="doctor-filter-button" type="button" data-app-message="Zaawansowane filtry specjalizacji podepniemy do backendu.">Specjalizacja <i class="bi bi-chevron-down" aria-hidden="true"></i></button>
-      <button class="doctor-filter-button" type="button" data-app-message="Filtrowanie po lokalizacji połączymy później z miastem pacjenta.">Lokalizacja <i class="bi bi-chevron-down" aria-hidden="true"></i></button>
-      <button class="doctor-filter-button" type="button" data-app-message="Tryb wizyty będzie filtrował wizyty stacjonarne i online.">Tryb wizyty <i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+      <button class="doctor-filter-button" type="button" data-bs-toggle="modal" data-bs-target="#doctorFiltersModal">
+        <i class="bi bi-sliders" aria-hidden="true"></i>
+        Filtry
+      </button>
       <button class="doctor-search-button" type="button">Szukaj</button>
     </section>
 
     <section class="section-card doctors-specialties-card">
       <h2 class="section-title">Najpopularniejsze specjalizacje</h2>
       <div class="doctors-specialties-grid">
-        <button class="doctor-specialty-card active" type="button">
+        <button class="doctor-specialty-card" type="button" data-specialty-filter="kardiolog">
           <i class="bi bi-heart-pulse" aria-hidden="true"></i>
           <strong>Kardiolog</strong>
           <span>128 lekarzy</span>
         </button>
-        <button class="doctor-specialty-card" type="button">
+        <button class="doctor-specialty-card" type="button" data-specialty-filter="dermatolog">
           <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
           <strong>Dermatolog</strong>
           <span>96 lekarzy</span>
         </button>
-        <button class="doctor-specialty-card" type="button">
+        <button class="doctor-specialty-card" type="button" data-specialty-filter="internista">
           <i class="bi bi-stethoscope" aria-hidden="true"></i>
           <strong>Internista</strong>
           <span>142 lekarzy</span>
         </button>
-        <button class="doctor-specialty-card" type="button">
+        <button class="doctor-specialty-card" type="button" data-specialty-filter="ortopeda">
           <i class="bi bi-bandaid" aria-hidden="true"></i>
           <strong>Ortopeda</strong>
           <span>87 lekarzy</span>
         </button>
-        <button class="doctor-specialty-card" type="button">
+        <button class="doctor-specialty-card" type="button" data-specialty-filter="pediatra">
           <i class="bi bi-emoji-smile" aria-hidden="true"></i>
           <strong>Pediatra</strong>
           <span>111 lekarzy</span>
         </button>
-        <button class="doctor-specialty-card" type="button">
+        <button
+          class="doctor-specialty-card"
+          type="button"
+          data-doctor-specialty-more
+          data-bs-toggle="modal"
+          data-bs-target="#doctorSpecialtiesModal"
+        >
           <i class="bi bi-arrow-right" aria-hidden="true"></i>
           <strong>Zobacz więcej</strong>
           <span>21 specjalizacji</span>
@@ -67,16 +74,23 @@
       <div class="section-card-header">
         <h2 class="section-title">Polecani lekarze</h2>
         <div class="doctor-list-tabs" aria-label="Filtry listy lekarzy">
-          <button class="active" type="button">Wszyscy</button>
-          <button type="button">Blisko Ciebie</button>
-          <button type="button">Dostępni dzisiaj</button>
-          <button type="button">Online</button>
+          <button class="active" type="button" data-doctor-tab="all">Wszyscy</button>
+          <button type="button" data-doctor-tab="nearby">Blisko Ciebie</button>
+          <button type="button" data-doctor-tab="today">Dostępni dzisiaj</button>
+          <button type="button" data-doctor-tab="online">Online</button>
         </div>
       </div>
 
       <div class="doctor-list">
         {% for lekarz in lekarze %}
-        <article class="doctor-list-row">
+        <article
+          class="doctor-list-row"
+          data-specialty="{{ lekarz['specjalizacja']|lower }}"
+          data-city="{{ lekarz['miasto']|lower }}"
+          data-mode="{{ lekarz['tryb_wizyty']|lower }}"
+          data-available-today="{% if loop.first %}true{% else %}false{% endif %}"
+          data-nearby="{% if lekarz['miasto'] == 'Warszawa' %}true{% else %}false{% endif %}"
+        >
           <div class="doctor-avatar">{{ lekarz["imie"][0] }}{{ lekarz["nazwisko"][0] }}</div>
           <div class="doctor-row-main">
             <strong>lek. {{ lekarz["imie"] }} {{ lekarz["nazwisko"] }} <i class="bi bi-patch-check-fill" aria-hidden="true"></i></strong>
@@ -94,7 +108,10 @@
             <strong>{% if loop.first %}Stacjonarna, Online{% else %}Stacjonarna{% endif %}</strong>
           </div>
           <div class="doctor-row-actions">
-            <a class="doctor-book-button" href="/szybki-zapis">
+            <a
+              class="doctor-book-button"
+              href="/szybki-zapis?lekarz_id={{ lekarz['id'] }}"
+            >
               <i class="bi bi-calendar-check" aria-hidden="true"></i>
               Umów wizytę
             </a>
@@ -103,7 +120,14 @@
         </article>
         {% endfor %}
 
-        <article class="doctor-list-row">
+        <article
+          class="doctor-list-row"
+          data-specialty="ortopeda"
+          data-city="warszawa"
+          data-mode="stacjonarna, online"
+          data-available-today="false"
+          data-nearby="true"
+        >
           <div class="doctor-avatar warm">MW</div>
           <div class="doctor-row-main">
             <strong>lek. Michał Wiśniewski <i class="bi bi-patch-check-fill" aria-hidden="true"></i></strong>
@@ -121,13 +145,19 @@
             <strong>Stacjonarna, Online</strong>
           </div>
           <div class="doctor-row-actions">
-            <a class="doctor-book-button" href="/szybki-zapis">
+            <a
+              class="doctor-book-button"
+              href="/szybki-zapis?lekarz_id=3"
+            >
               <i class="bi bi-calendar-check" aria-hidden="true"></i>
               Umów wizytę
             </a>
             <button class="doctor-profile-button" type="button" data-app-message="Profil lekarza dodamy jako osobny widok po backendzie lekarzy.">Zobacz profil</button>
           </div>
         </article>
+      </div>
+      <div class="empty-page-state compact doctor-empty-state" hidden>
+        Nie znaleziono lekarza pasującego do wybranych filtrów.
       </div>
       <div class="doctor-list-more">
         <button type="button" data-app-message="W widoku demo pokazujemy najważniejszych lekarzy. Pełną paginację dodamy z backendem.">
@@ -206,6 +236,90 @@
     </section>
   </aside>
 </section>
+
+<div
+  class="modal fade"
+  id="doctorFiltersModal"
+  tabindex="-1"
+  aria-labelledby="doctorFiltersModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal doctor-filters-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Filtrowanie lekarzy</p>
+          <h2 class="modal-title fs-5" id="doctorFiltersModalLabel">Dopasuj wyniki</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="doctor-filter-groups">
+          <section>
+            <h3>Specjalizacja</h3>
+            <label><input type="checkbox" value="kardiolog" data-filter-specialty> Kardiolog</label>
+            <label><input type="checkbox" value="dermatolog" data-filter-specialty> Dermatolog</label>
+            <label><input type="checkbox" value="internista" data-filter-specialty> Internista</label>
+            <label><input type="checkbox" value="ortopeda" data-filter-specialty> Ortopeda</label>
+          </section>
+          <section>
+            <h3>Lokalizacja</h3>
+            <label><input type="checkbox" value="warszawa" data-filter-city> Warszawa</label>
+            <label><input type="checkbox" value="krakow" data-filter-city> Kraków</label>
+          </section>
+          <section>
+            <h3>Tryb wizyty</h3>
+            <label><input type="checkbox" value="stacjonarna" data-filter-mode> Stacjonarna</label>
+            <label><input type="checkbox" value="online" data-filter-mode> Online</label>
+          </section>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-secondary-button" type="button" data-clear-doctor-filters>Wyczyść</button>
+        <button class="modal-primary-button" type="button" data-bs-dismiss="modal" data-apply-doctor-filters>
+          Zastosuj filtry
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="doctorSpecialtiesModal"
+  tabindex="-1"
+  aria-labelledby="doctorSpecialtiesModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal doctor-filters-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Specjalizacje</p>
+          <h2 class="modal-title fs-5" id="doctorSpecialtiesModalLabel">Wybierz specjalizacje</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="doctor-filter-groups">
+          <section>
+            <h3>Dostępne specjalizacje</h3>
+            <label><input type="checkbox" value="kardiolog" data-doctor-more-specialty> Kardiolog</label>
+            <label><input type="checkbox" value="dermatolog" data-doctor-more-specialty> Dermatolog</label>
+            <label><input type="checkbox" value="internista" data-doctor-more-specialty> Internista</label>
+            <label><input type="checkbox" value="ortopeda" data-doctor-more-specialty> Ortopeda</label>
+          </section>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-secondary-button" type="button" data-clear-doctor-specialties>Wyczyść</button>
+        <button class="modal-primary-button" type="button" data-bs-dismiss="modal" data-apply-doctor-specialties>
+          Zastosuj
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -214,13 +328,63 @@
   const doctorRows = Array.from(document.querySelectorAll(".doctor-list-row"));
   const specialtyCards = document.querySelectorAll(".doctor-specialty-card");
   const doctorTabs = document.querySelectorAll(".doctor-list-tabs button");
+  const doctorEmptyState = document.querySelector(".doctor-empty-state");
+  const applyDoctorFiltersButton = document.querySelector("[data-apply-doctor-filters]");
+  const clearDoctorFiltersButton = document.querySelector("[data-clear-doctor-filters]");
+  const applyDoctorSpecialtiesButton = document.querySelector("[data-apply-doctor-specialties]");
+  const clearDoctorSpecialtiesButton = document.querySelector("[data-clear-doctor-specialties]");
+
+  let activeDoctorTab = "all";
+
+  function normalizeDoctorText(value) {
+    return (value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function getCheckedDoctorFilters(selector) {
+    return Array.from(document.querySelectorAll(`${selector}:checked`)).map((checkbox) => checkbox.value);
+  }
+
+  function matchesAnyFilter(rowValue, selectedValues) {
+    return selectedValues.length === 0 || selectedValues.some((value) => rowValue.includes(value));
+  }
 
   function filterDoctorRows() {
-    const query = doctorSearchInput?.value.trim().toLowerCase() || "";
+    const query = normalizeDoctorText(doctorSearchInput?.value.trim());
+    const selectedSpecialties = getCheckedDoctorFilters("[data-filter-specialty]");
+    const selectedCities = getCheckedDoctorFilters("[data-filter-city]");
+    const selectedModes = getCheckedDoctorFilters("[data-filter-mode]");
+    let visibleRowsCount = 0;
 
     doctorRows.forEach((row) => {
-      row.hidden = query.length > 0 && !row.textContent.toLowerCase().includes(query);
+      const searchableText = normalizeDoctorText(row.textContent);
+      const rowSpecialty = normalizeDoctorText(row.dataset.specialty);
+      const rowCity = normalizeDoctorText(row.dataset.city);
+      const rowMode = normalizeDoctorText(row.dataset.mode);
+
+      const matchesQuery = !query || searchableText.includes(query);
+      const matchesSpecialty = matchesAnyFilter(rowSpecialty, selectedSpecialties);
+      const matchesCity = matchesAnyFilter(rowCity, selectedCities);
+      const matchesMode = matchesAnyFilter(rowMode, selectedModes);
+      const matchesTab =
+        activeDoctorTab === "all" ||
+        (activeDoctorTab === "nearby" && row.dataset.nearby === "true") ||
+        (activeDoctorTab === "today" && row.dataset.availableToday === "true") ||
+        (activeDoctorTab === "online" && rowMode.includes("online"));
+
+      const isVisible = matchesQuery && matchesSpecialty && matchesCity && matchesMode && matchesTab;
+      row.hidden = !isVisible;
+
+      if (isVisible) {
+        visibleRowsCount += 1;
+      }
     });
+
+    if (doctorEmptyState) {
+      doctorEmptyState.hidden = visibleRowsCount > 0;
+    }
   }
 
   doctorSearchInput?.addEventListener("input", filterDoctorRows);
@@ -232,21 +396,95 @@
 
   specialtyCards.forEach((card) => {
     card.addEventListener("click", () => {
+      if (card.hasAttribute("data-doctor-specialty-more")) {
+        const selectedSpecialties = getCheckedDoctorFilters("[data-filter-specialty]");
+
+        document.querySelectorAll("[data-doctor-more-specialty]").forEach((checkbox) => {
+          checkbox.checked = selectedSpecialties.includes(checkbox.value);
+        });
+
+        return;
+      }
+
       specialtyCards.forEach((item) => item.classList.remove("active"));
       card.classList.add("active");
 
-      const specialty = card.querySelector("strong")?.textContent.trim();
-      doctorSearchInput.value = specialty === "Zobacz więcej" ? "" : specialty;
+      const specialtyFilter = card.dataset.specialtyFilter || "";
+      const specialtyCheckboxes = document.querySelectorAll("[data-filter-specialty]");
+
+      specialtyCheckboxes.forEach((checkbox) => {
+        checkbox.checked = checkbox.value === specialtyFilter;
+      });
+
       filterDoctorRows();
     });
+  });
+
+  applyDoctorSpecialtiesButton?.addEventListener("click", () => {
+    const selectedSpecialties = getCheckedDoctorFilters("[data-doctor-more-specialty]");
+    const specialtyCheckboxes = document.querySelectorAll("[data-filter-specialty]");
+
+    specialtyCheckboxes.forEach((checkbox) => {
+      checkbox.checked = selectedSpecialties.includes(checkbox.value);
+    });
+
+    specialtyCards.forEach((card) => {
+      const filterValue = card.dataset.specialtyFilter || "";
+      const isRegularSpecialty = Boolean(filterValue);
+      const isMoreCard = card.hasAttribute("data-doctor-specialty-more");
+
+      card.classList.toggle(
+        "active",
+        (isRegularSpecialty && selectedSpecialties.length === 1 && selectedSpecialties[0] === filterValue) ||
+          (isMoreCard && selectedSpecialties.length !== 1)
+      );
+    });
+
+    filterDoctorRows();
+  });
+
+  clearDoctorSpecialtiesButton?.addEventListener("click", () => {
+    document.querySelectorAll("[data-doctor-more-specialty], [data-filter-specialty]").forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+
+    specialtyCards.forEach((card) => {
+      card.classList.toggle("active", card.hasAttribute("data-doctor-specialty-more"));
+    });
+
+    filterDoctorRows();
+  });
+
+  applyDoctorFiltersButton?.addEventListener("click", () => {
+    specialtyCards.forEach((card) => {
+      const filterValue = card.dataset.specialtyFilter || "";
+      const isActive = filterValue && getCheckedDoctorFilters("[data-filter-specialty]").includes(filterValue);
+      card.classList.toggle("active", isActive);
+    });
+
+    filterDoctorRows();
+  });
+
+  clearDoctorFiltersButton?.addEventListener("click", () => {
+    document
+      .querySelectorAll("[data-filter-specialty], [data-filter-city], [data-filter-mode]")
+      .forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+
+    specialtyCards.forEach((card) => card.classList.remove("active"));
+    filterDoctorRows();
   });
 
   doctorTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       doctorTabs.forEach((item) => item.classList.remove("active"));
       tab.classList.add("active");
-      window.showAppToast?.(`Wybrano filtr: ${tab.textContent.trim()}.`);
+      activeDoctorTab = tab.dataset.doctorTab || "all";
+      filterDoctorRows();
     });
   });
+
+  filterDoctorRows();
 </script>
 {% endblock %}

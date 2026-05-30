@@ -2,12 +2,7 @@
 
 Aplikacja webowa tworzona jako projekt portfolio Junior Python Developer.
 
-Celem projektu jest stworzenie systemu umożliwiającego:
-- zarządzanie wizytami,
-- podgląd profilu pacjenta,
-- obsługę panelu pacjenta,
-- wyszukiwanie lekarzy i aptek,
-- obsługę historii medycznej i recept.
+Celem projektu jest stworzenie prostego portalu pacjenta z widokami renderowanymi po stronie backendu. Aplikacja nie używa Reacta ani Node jako głównego frontendu. HTML jest generowany przez FastAPI i Jinja2.
 
 ---
 
@@ -19,34 +14,141 @@ Celem projektu jest stworzenie systemu umożliwiającego:
 - Bootstrap 5
 - Bootstrap Icons
 - PostgreSQL w późniejszym etapie
-- MongoDB w późniejszym etapie
 - Docker w późniejszym etapie
+- GitHub, branche i Pull Requesty
 
 ---
 
 ## Aktualny etap projektu
 
-Projekt ma podstawowy backend FastAPI, wspólny layout Jinja2 oraz kilka widoków pacjenta renderowanych po stronie serwera.
+Projekt ma działający backend FastAPI, wspólny layout Jinja2 oraz widoki pacjenta renderowane po stronie serwera.
 
-Aktualnie dostępne są między innymi:
-- endpoint statusu aplikacji,
-- lista lekarzy,
-- lista wizyt,
-- dodawanie wizyty przez `POST /wizyty`,
-- sprawdzanie, czy pacjent i lekarz istnieją,
-- blokada dodania wizyty na zajęty termin,
-- endpoint wolnych terminów lekarza,
-- profil aktualnego pacjenta,
-- wizyty aktualnego pacjenta,
-- panel pacjenta z podsumowaniem wizyt,
-- profil pacjenta dostępny z profilu w górnej nawigacji,
-- wspólna górna nawigacja dla wszystkich widoków pacjenta,
-- widok moich wizyt z kalendarzem,
-- widok szybkiego zapisu z filtrowaniem po specjalizacji i mieście,
-- widok historii medycznej jako stos 3 najnowszych wpisów,
-- widoki recept, lekarzy, aptek i ustawień.
+Aktualnie zrobione są między innymi:
 
-Na tym etapie dane są przechowywane tymczasowo w listach Pythonowych. W kolejnych etapach zostaną przeniesione do bazy danych.
+- panel pacjenta z podsumowaniem wizyt i planem opieki,
+- górna nawigacja wspólna dla widoków pacjenta,
+- profil pacjenta,
+- widok moich wizyt z kalendarzem i listami wizyt,
+- szybki zapis z realnym formularzem zapisu wizyty,
+- walidacja zapisu wizyty:
+  - pacjent musi istnieć,
+  - lekarz musi istnieć,
+  - termin nie może być w przeszłości,
+  - termin nie może być zajęty,
+  - data i godzina muszą mieć poprawny format,
+- przesuwanie wizyty,
+- odwoływanie wizyty,
+- komunikaty sukcesu i błędów po akcjach na wizytach,
+- ukrywanie zajętych terminów w szybkim zapisie,
+- endpoint wolnych godzin lekarza,
+- widok lekarzy,
+- widok recept,
+- widok leków,
+- widok historii medycznej,
+- widok ustawień.
+
+Na tym etapie dane są przechowywane tymczasowo w listach Pythonowych w `app/dane.py`. W kolejnych etapach zostaną przeniesione do PostgreSQL.
+
+---
+
+## Architektura projektu
+
+Najważniejsze pliki i katalogi:
+
+```text
+app/
+  main.py
+  dane.py
+  pomocnicy.py
+  schematy.py
+
+  routes/
+    api.py
+    strony.py
+
+  services/
+    wizyty.py
+    szybki_zapis.py
+    statusy_wizyt.py
+
+  templates/
+    base.html
+    panel_pacjent.html
+    moje_wizyty.html
+    szybki_zapis.html
+    recepty.html
+    leki.html
+    lekarze.html
+    historia.html
+    profil.html
+    ustawienia.html
+
+  static/
+    css/
+      app.css
+    fonts/
+    icons/
+```
+
+Podział odpowiedzialności:
+
+- `main.py` tworzy aplikację FastAPI, podpina pliki statyczne i routery.
+- `routes/strony.py` obsługuje widoki HTML.
+- `routes/api.py` obsługuje endpointy API zwracające JSON.
+- `services/wizyty.py` zawiera logikę biznesową wizyt.
+- `services/szybki_zapis.py` przygotowuje dane dla widoku szybkiego zapisu.
+- `services/statusy_wizyt.py` mapuje błędy i statusy akcji na komunikaty dla widoków.
+- `pomocnicy.py` zawiera funkcje pomocnicze do wyszukiwania i formatowania danych.
+- `templates/` zawiera szablony Jinja2.
+- `static/` zawiera CSS, fonty i grafiki.
+
+---
+
+## Endpointy HTML
+
+```text
+/panel-pacjenta
+/moje-wizyty
+/szybki-zapis
+/recepty
+/leki
+/apteki
+/lekarze-widok
+/historia
+/profil
+/ustawienia
+```
+
+Akcje formularzy HTML:
+
+```text
+POST /szybki-zapis
+POST /moje-wizyty/{wizyta_id}/odwolaj
+POST /moje-wizyty/{wizyta_id}/przesun
+```
+
+---
+
+## Endpointy API
+
+```text
+GET  /
+GET  /status
+GET  /lekarze
+GET  /wizyty
+POST /wizyty
+POST /wizyty/{wizyta_id}/odwolaj
+POST /wizyty/{wizyta_id}/przesun
+GET  /pacjenci/ja
+GET  /pacjenci/ja/wizyty
+GET  /lekarze/{lekarz_id}/wolne-terminy?data=YYYY-MM-DD
+```
+
+Dokumentacja API jest dostępna pod:
+
+```text
+http://127.0.0.1:8000/docs
+```
 
 ---
 
@@ -64,60 +166,45 @@ Na tym etapie dane są przechowywane tymczasowo w listach Pythonowych. W kolejny
 uvicorn app.main:app --reload
 ```
 
----
-
-## Adresy lokalne
-
-Aplikacja:
+### Adres lokalny
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Panel pacjenta:
+Najważniejsze widoki:
 
 ```text
 http://127.0.0.1:8000/panel-pacjenta
-```
-
-Najważniejsze widoki pacjenta:
-
-```text
 http://127.0.0.1:8000/moje-wizyty
 http://127.0.0.1:8000/szybki-zapis
+http://127.0.0.1:8000/lekarze-widok
+http://127.0.0.1:8000/recepty
+http://127.0.0.1:8000/leki
 http://127.0.0.1:8000/historia
 http://127.0.0.1:8000/profil
-```
-
-Dokumentacja API:
-
-```text
-http://127.0.0.1:8000/docs
 ```
 
 ---
 
 ## Planowane funkcjonalności
 
-- Rejestracja i logowanie użytkowników
-- Role: pacjent i lekarz
-- Panel lekarza
-- Umawianie wizyt z poziomu widoku HTML
-- Pełna lista archiwalnych wpisów historii medycznej
-- Podpięcie szybkiego zapisu pod backend
-- Komunikaty sukcesu i błędów po zapisie wizyty
-- Lepsza walidacja dat i godzin wizyt
-- Rozbudowa recept
-- Wyszukiwarka lekarzy
-- Mapa aptek i placówek medycznych
-- Integracja z PostgreSQL
-- Integracja z MongoDB
-- Docker Compose
-- Testy automatyczne
-- CI/CD GitHub Actions
+- dalsze porządkowanie struktury plików,
+- przygotowanie danych pod przyszłe tabele w PostgreSQL,
+- logowanie użytkowników,
+- odejście od tymczasowego `pacjent_id = 1`,
+- panel lekarza,
+- rozbudowa recept i leków po zaprojektowaniu bazy danych,
+- pełna historia medyczna pacjenta,
+- wyszukiwarka i filtrowanie lekarzy,
+- prawdziwe dane placówek i lokalizacji,
+- PostgreSQL,
+- Docker Compose,
+- testy automatyczne,
+- CI/CD GitHub Actions.
 
 ---
 
 ## Status projektu
 
-Projekt jest rozwijany etapami. Obecny etap skupia się na dopracowaniu widoków pacjenta, utrzymaniu prostego backendu, porządkowaniu logiki w helperach oraz dobrych praktykach pracy z Git i Pull Requestami.
+Projekt jest rozwijany etapami. Obecny etap skupia się na dopracowaniu logiki wizyt, uporządkowaniu warstw aplikacji oraz przygotowaniu projektu do dalszego rozwoju backendu i bazy danych.
