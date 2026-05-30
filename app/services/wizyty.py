@@ -1,7 +1,12 @@
 from datetime import datetime
 
-from app.dane import wizyty
-from app.pomocnicy import termin_jest_zajety, znajdz_lekarza, znajdz_pacjenta
+from app.repositories.lekarze_repo import znajdz_lekarza
+from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.wizyty_repo import (
+    dodaj_wizyte,
+    termin_jest_zajety,
+    znajdz_wizyte,
+)
 
 
 class PacjentNieIstnieje(Exception):
@@ -53,14 +58,6 @@ def sprawdz_termin_nie_jest_w_przeszlosci(data: str, godzina: str):
         raise TerminWPrzeszlosci()
 
 
-def znajdz_wizyte(wizyta_id: int):
-    for wizyta in wizyty:
-        if wizyta["id"] == wizyta_id:
-            return wizyta
-
-    return None
-
-
 def sprawdz_dostep_do_wizyty(wizyta_id: int, pacjent_id: int):
     wizyta = znajdz_wizyte(wizyta_id)
 
@@ -97,19 +94,13 @@ def utworz_wizyte(
     if termin_jest_zajety(lekarz_id, data, godzina):
         raise TerminZajety()
 
-    wizyta = {
-        "id": len(wizyty) + 1,
-        "pacjent_id": pacjent_id,
-        "lekarz_id": lekarz_id,
-        "data": data,
-        "godzina": godzina,
-        "status": "zaplanowana",
-        "notatka": notatka,
-    }
-
-    wizyty.append(wizyta)
-
-    return wizyta
+    return dodaj_wizyte(
+        pacjent_id=pacjent_id,
+        lekarz_id=lekarz_id,
+        data=data,
+        godzina=godzina,
+        notatka=notatka,
+    )
 
 
 def odwolaj_wizyte(wizyta_id: int, pacjent_id: int):

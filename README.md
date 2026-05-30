@@ -58,6 +58,7 @@ Najważniejsze pliki i katalogi:
 ```text
 app/
   main.py
+  database.py
   dane.py
   pomocnicy.py
   schematy.py
@@ -70,6 +71,16 @@ app/
     wizyty.py
     szybki_zapis.py
     statusy_wizyt.py
+
+  repositories/
+    pacjenci_repo.py
+    lekarze_repo.py
+    wizyty_repo.py
+
+  models/
+    pacjent.py
+    lekarz.py
+    wizyta.py
 
   templates/
     base.html
@@ -93,12 +104,15 @@ app/
 Podział odpowiedzialności:
 
 - `main.py` tworzy aplikację FastAPI, podpina pliki statyczne i routery.
+- `database.py` zawiera konfigurację SQLAlchemy: adres bazy, silnik połączenia, sesję i funkcję `get_db()`.
 - `routes/strony.py` obsługuje widoki HTML.
 - `routes/api.py` obsługuje endpointy API zwracające JSON.
 - `services/wizyty.py` zawiera logikę biznesową wizyt.
 - `services/szybki_zapis.py` przygotowuje dane dla widoku szybkiego zapisu.
 - `services/statusy_wizyt.py` mapuje błędy i statusy akcji na komunikaty dla widoków.
-- `pomocnicy.py` zawiera funkcje pomocnicze do wyszukiwania i formatowania danych.
+- `repositories/` zawiera funkcje dostępu do danych pacjentów, lekarzy i wizyt. Aktualnie korzysta jeszcze z list w `app/dane.py`, ale jest przygotowane pod późniejszą podmianę na PostgreSQL.
+- `models/` zawiera modele SQLAlchemy opisujące przyszłe tabele bazy danych.
+- `pomocnicy.py` zawiera funkcje pomocnicze do formatowania i przygotowywania danych pod widoki.
 - `templates/` zawiera szablony Jinja2.
 - `static/` zawiera CSS, fonty i grafiki.
 

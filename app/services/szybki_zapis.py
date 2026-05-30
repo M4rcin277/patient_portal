@@ -1,11 +1,10 @@
 from datetime import date, timedelta
 
-from app.dane import godziny_przyjec, lekarze
-from app.pomocnicy import (
-    formatuj_date_po_polsku,
-    termin_jest_zajety,
-    znajdz_pacjenta,
-)
+from app.dane import godziny_przyjec
+from app.pomocnicy import formatuj_date_po_polsku
+from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy, znajdz_lekarza
+from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.wizyty_repo import termin_jest_zajety
 from app.services.wizyty import termin_jest_w_przeszlosci
 
 
@@ -56,7 +55,7 @@ def przygotuj_dostepne_terminy_szybkiego_zapisu():
     przesuniecia_dni = [0, 1, 2, 3, 5, 8, 14, 21, 34, 45, 60]
     dostepne_terminy = []
 
-    for indeks, lekarz in enumerate(lekarze):
+    for indeks, lekarz in enumerate(pobierz_wszystkich_lekarzy()):
         for pozycja_dnia, przesuniecie in enumerate(przesuniecia_dni):
             data_terminu = dzisiaj + timedelta(days=przesuniecie)
             godzina = godziny_przyjec[
@@ -75,7 +74,7 @@ def przygotuj_dostepne_terminy_szybkiego_zapisu():
 
 
 def przygotuj_terminy_lekarza(lekarz_id: int, liczba_dni: int = 90):
-    lekarz = next((lekarz for lekarz in lekarze if lekarz["id"] == lekarz_id), None)
+    lekarz = znajdz_lekarza(lekarz_id)
 
     if lekarz is None:
         return []
@@ -106,15 +105,12 @@ def przygotuj_kontekst_szybkiego_zapisu(
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id)
     dostepne_terminy = przygotuj_dostepne_terminy_szybkiego_zapisu()
-    wybrany_lekarz = next(
-        (lekarz for lekarz in lekarze if lekarz["id"] == lekarz_id),
-        None,
-    )
+    wybrany_lekarz = znajdz_lekarza(lekarz_id) if lekarz_id is not None else None
     dzisiaj = date.today()
     kontekst = {
         "pacjent": pacjent,
         "aktywna_strona": "szybki_zapis",
-        "lekarze": lekarze,
+        "lekarze": pobierz_wszystkich_lekarzy(),
         "godziny_przyjec": godziny_przyjec,
         "dostepne_terminy": dostepne_terminy,
         "rekomendowane_terminy": dostepne_terminy[:3],

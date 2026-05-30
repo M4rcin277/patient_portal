@@ -1,12 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from app.dane import lekarze, wizyty
-from app.pomocnicy import (
-    pobierz_wizyty_pacjenta,
-    pobierz_wolne_godziny,
-    znajdz_lekarza,
-    znajdz_pacjenta,
-)
+from app.pomocnicy import pobierz_wizyty_pacjenta
+from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy, znajdz_lekarza
+from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.wizyty_repo import pobierz_wolne_godziny, pobierz_wszystkie_wizyty
 from app.schematy import NowaWizyta, PrzesuniecieWizyty
 from app.services.wizyty import (
     BrakDostepuDoWizyty,
@@ -70,7 +67,7 @@ def sprawdz_status():
 
 @router.get("/lekarze")
 def pobierz_lekarzy():
-    return lekarze
+    return pobierz_wszystkich_lekarzy()
 
 
 @router.get("/lekarze/{lekarz_id}/wolne-terminy")
@@ -94,7 +91,7 @@ def pobierz_wolne_terminy(lekarz_id: int, data: str):
 
 @router.get("/wizyty")
 def pobierz_wizyty():
-    return wizyty
+    return pobierz_wszystkie_wizyty()
 
 
 @router.post("/wizyty")

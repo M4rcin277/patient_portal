@@ -9,7 +9,6 @@ from app.dane import (
     godziny_przyjec,
     harmonogram_lekow,
     historia_medyczna,
-    lekarze,
     leki_pacjenta,
     plan_opieki,
     recepty_pacjenta,
@@ -20,8 +19,9 @@ from app.pomocnicy import (
     przygotuj_historie_medyczna,
     przygotuj_kalendarz_wizyt,
     znajdz_najblizsza_wizyte,
-    znajdz_pacjenta,
 )
+from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy
+from app.repositories.pacjenci_repo import znajdz_pacjenta
 from app.services.statusy_wizyt import (
     STATUSY_WIZYT,
     przekieruj_do_wizyt,
@@ -303,7 +303,7 @@ def widok_lekarze(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "lekarze",
-            "lekarze": lekarze,
+            "lekarze": pobierz_wszystkich_lekarzy(),
         },
     )
 
