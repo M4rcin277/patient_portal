@@ -140,6 +140,8 @@ Podział odpowiedzialności:
 - `templates/` zawiera szablony Jinja2.
 - `static/` zawiera CSS, fonty i grafiki.
 
+Szczegółowy opis tabel, relacji i decyzji projektowych znajduje się w `DATABASE_SCHEMA.md`.
+
 ---
 
 ## Endpointy HTML

@@ -131,10 +131,64 @@
         </article>
         {% endfor %}
       </div>
-      <a href="/leki">Zobacz więcej aptek <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+      <button
+        class="prescription-more-pharmacies"
+        type="button"
+        data-bs-toggle="modal"
+        data-bs-target="#allPharmaciesModal"
+      >
+        Zobacz więcej aptek <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
     </section>
   </aside>
 </section>
+
+<div
+  class="modal fade"
+  id="allPharmaciesModal"
+  tabindex="-1"
+  aria-labelledby="allPharmaciesModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content appointment-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Apteki w pobliżu</p>
+          <h2 class="modal-title fs-5" id="allPharmaciesModalLabel">Gdzie zrealizować receptę?</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="prescription-map prescription-map-large" aria-label="Mapa aptek w pobliżu">
+          <i class="bi bi-geo-alt-fill prescription-map-pin primary" aria-hidden="true"></i>
+          <i class="bi bi-geo-alt-fill prescription-map-pin second" aria-hidden="true"></i>
+          <i class="bi bi-geo-alt-fill prescription-map-pin third" aria-hidden="true"></i>
+          <i class="bi bi-person-fill prescription-map-user" aria-hidden="true"></i>
+        </div>
+
+        <div class="modal-pharmacy-list">
+          {% for apteka in apteki %}
+          <article>
+            <i class="bi bi-prescription2" aria-hidden="true"></i>
+            <div>
+              <strong>{{ apteka["nazwa"] }}</strong>
+              <span>{{ apteka["adres"] }}</span>
+              <small>Godziny otwarcia: {{ apteka["godziny"] }}</small>
+            </div>
+            <span class="pharmacy-distance">
+              {% if loop.index == 1 %}350 m{% elif loop.index == 2 %}650 m{% else %}1,2 km{% endif %}
+            </span>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

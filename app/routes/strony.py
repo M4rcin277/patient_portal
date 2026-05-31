@@ -195,6 +195,7 @@ async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
         lekarz_id = int(dane_formularza["lekarz_id"][0])
         data = dane_formularza["data"][0].strip()
         godzina = dane_formularza["godzina"][0].strip()
+        tryb_wizyty = dane_formularza.get("tryb_wizyty", ["stacjonarnie"])[0].strip()
     except (KeyError, IndexError, ValueError):
         return templates.TemplateResponse(
             request,
@@ -212,7 +213,7 @@ async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
             lekarz_id=lekarz_id,
             data=data,
             godzina=godzina,
-            notatka="Wizyta umówiona przez szybki zapis",
+            notatka=f"Wizyta umówiona przez szybki zapis. Tryb wizyty: {tryb_wizyty}",
             db=db,
         )
     except PacjentNieIstnieje:

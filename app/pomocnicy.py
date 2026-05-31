@@ -81,12 +81,15 @@ def przygotuj_historie_medyczna(historia_medyczna):
 def przygotuj_wizyte_dla_pacjenta(wizyta, db=None):
     lekarz = znajdz_lekarza(wizyta["lekarz_id"], db)
     data_wizyty = date.fromisoformat(wizyta["data"])
+    notatka = wizyta["notatka"] or ""
+    typ_realizacji = "online" if "tryb wizyty: online" in notatka.lower() else "stacjonarnie"
 
     return {
         "id": wizyta["id"],
         "lekarz": f"{lekarz['imie']} {lekarz['nazwisko']}",
         "specjalizacja": lekarz["specjalizacja"],
         "lokalizacja": lekarz["lokalizacja"],
+        "tryb_wizyty": lekarz["tryb_wizyty"],
         "data": wizyta["data"],
         "data_czytelna": formatuj_date_po_polsku(wizyta["data"]),
         "data_dzien": f"{data_wizyty.day:02d}",
@@ -94,7 +97,8 @@ def przygotuj_wizyte_dla_pacjenta(wizyta, db=None):
         "data_rok": data_wizyty.year,
         "godzina": wizyta["godzina"],
         "status": wizyta["status"],
-        "notatka": wizyta["notatka"],
+        "notatka": notatka,
+        "typ_realizacji": typ_realizacji,
     }
 
 
@@ -190,7 +194,9 @@ def przygotuj_kalendarz_wizyt(
         typ_wizyty = None
 
         if wizyta:
-            if data_dnia == dzisiaj:
+            if wizyta.get("typ_realizacji") == "online":
+                typ_wizyty = "online"
+            elif data_dnia == dzisiaj:
                 typ_wizyty = "dzisiaj"
             elif data_dnia > dzisiaj:
                 typ_wizyty = "przyszla"
