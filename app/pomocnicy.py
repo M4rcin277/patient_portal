@@ -78,8 +78,8 @@ def przygotuj_historie_medyczna(historia_medyczna):
     return sorted(wpisy, key=lambda wpis: wpis["data"], reverse=True)
 
 
-def przygotuj_wizyte_dla_pacjenta(wizyta):
-    lekarz = znajdz_lekarza(wizyta["lekarz_id"])
+def przygotuj_wizyte_dla_pacjenta(wizyta, db=None):
+    lekarz = znajdz_lekarza(wizyta["lekarz_id"], db)
     data_wizyty = date.fromisoformat(wizyta["data"])
 
     return {
@@ -98,11 +98,11 @@ def przygotuj_wizyte_dla_pacjenta(wizyta):
     }
 
 
-def pobierz_wizyty_pacjenta(pacjent_id: int):
+def pobierz_wizyty_pacjenta(pacjent_id: int, db=None):
     wizyty_pacjenta = []
 
-    for wizyta in pobierz_surowe_wizyty_pacjenta(pacjent_id):
-        wizyty_pacjenta.append(przygotuj_wizyte_dla_pacjenta(wizyta))
+    for wizyta in pobierz_surowe_wizyty_pacjenta(pacjent_id, db):
+        wizyty_pacjenta.append(przygotuj_wizyte_dla_pacjenta(wizyta, db))
 
     return wizyty_pacjenta
 

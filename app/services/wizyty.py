@@ -4,7 +4,9 @@ from app.repositories.lekarze_repo import znajdz_lekarza
 from app.repositories.pacjenci_repo import znajdz_pacjenta
 from app.repositories.wizyty_repo import (
     dodaj_wizyte,
+    ustaw_status_wizyty,
     termin_jest_zajety,
+    zaktualizuj_termin_wizyty,
     znajdz_wizyte,
 )
 
@@ -58,8 +60,8 @@ def sprawdz_termin_nie_jest_w_przeszlosci(data: str, godzina: str):
         raise TerminWPrzeszlosci()
 
 
-def sprawdz_dostep_do_wizyty(wizyta_id: int, pacjent_id: int):
-    wizyta = znajdz_wizyte(wizyta_id)
+def sprawdz_dostep_do_wizyty(wizyta_id: int, pacjent_id: int, db=None):
+    wizyta = znajdz_wizyte(wizyta_id, db)
 
     if wizyta is None:
         raise WizytaNieIstnieje()
@@ -79,9 +81,10 @@ def utworz_wizyte(
     data: str,
     godzina: str,
     notatka: str,
+    db=None,
 ):
-    pacjent = znajdz_pacjenta(pacjent_id)
-    lekarz = znajdz_lekarza(lekarz_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    lekarz = znajdz_lekarza(lekarz_id, db)
 
     if pacjent is None:
         raise PacjentNieIstnieje()
@@ -91,7 +94,7 @@ def utworz_wizyte(
 
     sprawdz_termin_nie_jest_w_przeszlosci(data, godzina)
 
-    if termin_jest_zajety(lekarz_id, data, godzina):
+    if termin_jest_zajety(lekarz_id, data, godzina, db=db):
         raise TerminZajety()
 
     return dodaj_wizyte(
@@ -100,17 +103,16 @@ def utworz_wizyte(
         data=data,
         godzina=godzina,
         notatka=notatka,
+        db=db,
     )
 
 
-def odwolaj_wizyte(wizyta_id: int, pacjent_id: int):
-    wizyta = sprawdz_dostep_do_wizyty(wizyta_id, pacjent_id)
+def odwolaj_wizyte(wizyta_id: int, pacjent_id: int, db=None):
+    wizyta = sprawdz_dostep_do_wizyty(wizyta_id, pacjent_id, db)
 
     sprawdz_termin_nie_jest_w_przeszlosci(wizyta["data"], wizyta["godzina"])
 
-    wizyta["status"] = "odwolana"
-
-    return wizyta
+    return ustaw_status_wizyty(wizyta["id"], "odwolana", db)
 
 
 def przesun_wizyte(
@@ -118,8 +120,9 @@ def przesun_wizyte(
     pacjent_id: int,
     data: str,
     godzina: str,
+    db=None,
 ):
-    wizyta = sprawdz_dostep_do_wizyty(wizyta_id, pacjent_id)
+    wizyta = sprawdz_dostep_do_wizyty(wizyta_id, pacjent_id, db)
 
     sprawdz_termin_nie_jest_w_przeszlosci(data, godzina)
 
@@ -128,11 +131,14 @@ def przesun_wizyte(
         data,
         godzina,
         pomin_wizyte_id=wizyta["id"],
+        db=db,
     ):
         raise TerminZajety()
 
-    wizyta["data"] = data
-    wizyta["godzina"] = godzina
-    wizyta["status"] = "przesunieta"
-
-    return wizyta
+    return zaktualizuj_termin_wizyty(
+        wizyta_id=wizyta["id"],
+        data=data,
+        godzina=godzina,
+        status="przesunieta",
+        db=db,
+    )

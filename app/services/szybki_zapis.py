@@ -1,20 +1,20 @@
 from datetime import date, timedelta
 
-from app.dane import godziny_przyjec
 from app.pomocnicy import formatuj_date_po_polsku
+from app.repositories.godziny_przyjec_repo import pobierz_godziny_przyjec
 from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy, znajdz_lekarza
 from app.repositories.pacjenci_repo import znajdz_pacjenta
 from app.repositories.wizyty_repo import termin_jest_zajety
 from app.services.wizyty import termin_jest_w_przeszlosci
 
 
-def przygotuj_termin_dla_szybkiego_zapisu(lekarz, data_terminu, godzina):
+def przygotuj_termin_dla_szybkiego_zapisu(lekarz, data_terminu, godzina, db=None):
     data_tekst = data_terminu.isoformat()
 
     if termin_jest_w_przeszlosci(data_tekst, godzina):
         return None
 
-    if termin_jest_zajety(lekarz["id"], data_tekst, godzina):
+    if termin_jest_zajety(lekarz["id"], data_tekst, godzina, db=db):
         return None
 
     dzisiaj = date.today()
@@ -50,12 +50,13 @@ def przygotuj_termin_dla_szybkiego_zapisu(lekarz, data_terminu, godzina):
     }
 
 
-def przygotuj_dostepne_terminy_szybkiego_zapisu():
+def przygotuj_dostepne_terminy_szybkiego_zapisu(db=None):
     dzisiaj = date.today()
     przesuniecia_dni = [0, 1, 2, 3, 5, 8, 14, 21, 34, 45, 60]
+    godziny_przyjec = pobierz_godziny_przyjec(db)
     dostepne_terminy = []
 
-    for indeks, lekarz in enumerate(pobierz_wszystkich_lekarzy()):
+    for indeks, lekarz in enumerate(pobierz_wszystkich_lekarzy(db)):
         for pozycja_dnia, przesuniecie in enumerate(przesuniecia_dni):
             data_terminu = dzisiaj + timedelta(days=przesuniecie)
             godzina = godziny_przyjec[
@@ -65,6 +66,7 @@ def przygotuj_dostepne_terminy_szybkiego_zapisu():
                 lekarz,
                 data_terminu,
                 godzina,
+                db,
             )
 
             if termin is not None:
@@ -73,8 +75,9 @@ def przygotuj_dostepne_terminy_szybkiego_zapisu():
     return dostepne_terminy
 
 
-def przygotuj_terminy_lekarza(lekarz_id: int, liczba_dni: int = 90):
-    lekarz = znajdz_lekarza(lekarz_id)
+def przygotuj_terminy_lekarza(lekarz_id: int, liczba_dni: int = 90, db=None):
+    lekarz = znajdz_lekarza(lekarz_id, db)
+    godziny_przyjec = pobierz_godziny_przyjec(db)
 
     if lekarz is None:
         return []
@@ -90,6 +93,7 @@ def przygotuj_terminy_lekarza(lekarz_id: int, liczba_dni: int = 90):
                 lekarz,
                 data_terminu,
                 godzina,
+                db,
             )
 
             if termin is not None:
@@ -101,16 +105,18 @@ def przygotuj_terminy_lekarza(lekarz_id: int, liczba_dni: int = 90):
 def przygotuj_kontekst_szybkiego_zapisu(
     blad: str | None = None,
     lekarz_id: int | None = None,
+    db=None,
 ):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    dostepne_terminy = przygotuj_dostepne_terminy_szybkiego_zapisu()
-    wybrany_lekarz = znajdz_lekarza(lekarz_id) if lekarz_id is not None else None
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    godziny_przyjec = pobierz_godziny_przyjec(db)
+    dostepne_terminy = przygotuj_dostepne_terminy_szybkiego_zapisu(db)
+    wybrany_lekarz = znajdz_lekarza(lekarz_id, db) if lekarz_id is not None else None
     dzisiaj = date.today()
     kontekst = {
         "pacjent": pacjent,
         "aktywna_strona": "szybki_zapis",
-        "lekarze": pobierz_wszystkich_lekarzy(),
+        "lekarze": pobierz_wszystkich_lekarzy(db),
         "godziny_przyjec": godziny_przyjec,
         "dostepne_terminy": dostepne_terminy,
         "rekomendowane_terminy": dostepne_terminy[:3],
@@ -119,7 +125,7 @@ def przygotuj_kontekst_szybkiego_zapisu(
         ),
         "wybrany_lekarz": wybrany_lekarz,
         "terminy_wybranego_lekarza": (
-            przygotuj_terminy_lekarza(lekarz_id) if wybrany_lekarz else []
+            przygotuj_terminy_lekarza(lekarz_id, db=db) if wybrany_lekarz else []
         ),
         "minimalna_data_rezerwacji": dzisiaj.isoformat(),
         "maksymalna_data_rezerwacji": (dzisiaj + timedelta(days=90)).isoformat(),

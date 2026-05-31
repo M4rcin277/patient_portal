@@ -1,27 +1,25 @@
 from datetime import date
 from urllib.parse import parse_qs
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
-from app.dane import (
-    apteki,
-    godziny_przyjec,
-    harmonogram_lekow,
-    historia_medyczna,
-    leki_pacjenta,
-    plan_opieki,
-    recepty_pacjenta,
-)
 from app.pomocnicy import (
     pobierz_nadchodzace_wizyty,
     pobierz_wizyty_pacjenta,
-    przygotuj_historie_medyczna,
     przygotuj_kalendarz_wizyt,
     znajdz_najblizsza_wizyte,
 )
+from app.database import get_db
+from app.repositories.apteki_repo import pobierz_apteki
+from app.repositories.godziny_przyjec_repo import pobierz_godziny_przyjec
+from app.repositories.historia_repo import pobierz_historie_medyczna_pacjenta
+from app.repositories.leki_repo import pobierz_leki_pacjenta, przygotuj_harmonogram_lekow
 from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy
 from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.plan_opieki_repo import pobierz_plan_opieki_pacjenta
+from app.repositories.recepty_repo import pobierz_recepty_pacjenta
 from app.services.statusy_wizyt import (
     STATUSY_WIZYT,
     przekieruj_do_wizyt,
@@ -51,10 +49,13 @@ def panel_pacjenta(
     request: Request,
     rok: int | None = None,
     miesiac: int | None = None,
+    db: Session = Depends(get_db),
 ):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    plan_opieki = pobierz_plan_opieki_pacjenta(pacjent_id, db)
+    godziny_przyjec = pobierz_godziny_przyjec(db)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
     nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
     najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
     kalendarz_wizyt = przygotuj_kalendarz_wizyt(
@@ -129,10 +130,12 @@ def widok_moje_wizyty(
     rok: int | None = None,
     miesiac: int | None = None,
     status: str | None = None,
+    db: Session = Depends(get_db),
 ):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    godziny_przyjec = pobierz_godziny_przyjec(db)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
     nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
     najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
     kalendarz_wizyt = przygotuj_kalendarz_wizyt(
@@ -171,16 +174,20 @@ def widok_moje_wizyty(
 
 
 @router.get("/szybki-zapis")
-def widok_szybki_zapis(request: Request, lekarz_id: int | None = None):
+def widok_szybki_zapis(
+    request: Request,
+    lekarz_id: int | None = None,
+    db: Session = Depends(get_db),
+):
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        przygotuj_kontekst_szybkiego_zapisu(lekarz_id=lekarz_id),
+        przygotuj_kontekst_szybkiego_zapisu(lekarz_id=lekarz_id, db=db),
     )
 
 
 @router.post("/szybki-zapis")
-async def zapisz_szybki_zapis(request: Request):
+async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
     dane_formularza = parse_qs((await request.body()).decode("utf-8"))
 
@@ -193,7 +200,8 @@ async def zapisz_szybki_zapis(request: Request):
             request,
             "szybki_zapis.html",
             przygotuj_kontekst_szybkiego_zapisu(
-                "Nie udało się odczytać danych formularza."
+                "Nie udało się odczytać danych formularza.",
+                db=db,
             ),
             status_code=400,
         )
@@ -205,6 +213,7 @@ async def zapisz_szybki_zapis(request: Request):
             data=data,
             godzina=godzina,
             notatka="Wizyta umówiona przez szybki zapis",
+            db=db,
         )
     except PacjentNieIstnieje:
         blad = "Nie znaleziono pacjenta."
@@ -222,17 +231,20 @@ async def zapisz_szybki_zapis(request: Request):
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        przygotuj_kontekst_szybkiego_zapisu(blad),
+        przygotuj_kontekst_szybkiego_zapisu(blad, db=db),
         status_code=400,
     )
 
 
 @router.post("/moje-wizyty/{wizyta_id}/odwolaj")
-async def odwolaj_wizyte_html(wizyta_id: int):
+async def odwolaj_wizyte_html(
+    wizyta_id: int,
+    db: Session = Depends(get_db),
+):
     pacjent_id = 1
 
     try:
-        odwolaj_wizyte(wizyta_id, pacjent_id)
+        odwolaj_wizyte(wizyta_id, pacjent_id, db)
     except (
         WizytaNieIstnieje,
         BrakDostepuDoWizyty,
@@ -245,7 +257,11 @@ async def odwolaj_wizyte_html(wizyta_id: int):
 
 
 @router.post("/moje-wizyty/{wizyta_id}/przesun")
-async def przesun_wizyte_html(wizyta_id: int, request: Request):
+async def przesun_wizyte_html(
+    wizyta_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     pacjent_id = 1
     dane_formularza = parse_qs((await request.body()).decode("utf-8"))
 
@@ -261,6 +277,7 @@ async def przesun_wizyte_html(wizyta_id: int, request: Request):
             pacjent_id=pacjent_id,
             data=data,
             godzina=godzina,
+            db=db,
         )
     except (
         WizytaNieIstnieje,
@@ -276,9 +293,11 @@ async def przesun_wizyte_html(wizyta_id: int, request: Request):
 
 
 @router.get("/recepty")
-def widok_recepty(request: Request):
+def widok_recepty(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    recepty = pobierz_recepty_pacjenta(pacjent_id, db)
+    apteki = pobierz_apteki(db)
 
     return templates.TemplateResponse(
         request,
@@ -286,16 +305,16 @@ def widok_recepty(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "recepty",
-            "recepty_pacjenta": recepty_pacjenta,
+            "recepty_pacjenta": recepty,
             "apteki": apteki,
         },
     )
 
 
 @router.get("/lekarze-widok")
-def widok_lekarze(request: Request):
+def widok_lekarze(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
 
     return templates.TemplateResponse(
         request,
@@ -303,15 +322,16 @@ def widok_lekarze(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "lekarze",
-            "lekarze": pobierz_wszystkich_lekarzy(),
+            "lekarze": pobierz_wszystkich_lekarzy(db),
         },
     )
 
 
 @router.get("/leki")
-def widok_leki(request: Request):
+def widok_leki(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    leki = pobierz_leki_pacjenta(pacjent_id, db)
 
     return templates.TemplateResponse(
         request,
@@ -319,22 +339,22 @@ def widok_leki(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "leki",
-            "leki_pacjenta": leki_pacjenta,
-            "harmonogram_lekow": harmonogram_lekow,
+            "leki_pacjenta": leki,
+            "harmonogram_lekow": przygotuj_harmonogram_lekow(leki),
         },
     )
 
 
 @router.get("/apteki")
-def widok_apteki(request: Request):
-    return widok_leki(request)
+def widok_apteki(request: Request, db: Session = Depends(get_db)):
+    return widok_leki(request, db)
 
 
 @router.get("/historia")
-def widok_historia(request: Request):
+def widok_historia(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    wpisy_historii = przygotuj_historie_medyczna(historia_medyczna)[:3]
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    wpisy_historii = pobierz_historie_medyczna_pacjenta(pacjent_id, db)[:3]
 
     return templates.TemplateResponse(
         request,
@@ -348,10 +368,11 @@ def widok_historia(request: Request):
 
 
 @router.get("/profil")
-def widok_profil(request: Request):
+def widok_profil(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    plan_opieki = pobierz_plan_opieki_pacjenta(pacjent_id, db)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
     nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
     najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
     ostatnie_wizyty = sorted(
@@ -374,9 +395,9 @@ def widok_profil(request: Request):
 
 
 @router.get("/ustawienia")
-def widok_ustawienia(request: Request):
+def widok_ustawienia(request: Request, db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
 
     return templates.TemplateResponse(
         request,
