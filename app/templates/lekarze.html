@@ -14,6 +14,20 @@
   </button>
 </header>
 
+{% if komunikat_sukcesu %}
+<div class="page-success-alert" data-auto-dismiss-alert>
+  <i class="bi bi-check-circle" aria-hidden="true"></i>
+  {{ komunikat_sukcesu }}
+</div>
+{% endif %}
+
+{% if komunikat_bledu %}
+<div class="page-error-alert" data-auto-dismiss-alert>
+  <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+  {{ komunikat_bledu }}
+</div>
+{% endif %}
+
 <section class="doctors-layout">
   <div class="doctors-main-column">
     <section class="section-card doctors-search-card">
@@ -34,27 +48,22 @@
         <button class="doctor-specialty-card" type="button" data-specialty-filter="kardiolog">
           <i class="bi bi-heart-pulse" aria-hidden="true"></i>
           <strong>Kardiolog</strong>
-          <span>128 lekarzy</span>
         </button>
         <button class="doctor-specialty-card" type="button" data-specialty-filter="dermatolog">
           <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
           <strong>Dermatolog</strong>
-          <span>96 lekarzy</span>
         </button>
         <button class="doctor-specialty-card" type="button" data-specialty-filter="internista">
-          <i class="bi bi-stethoscope" aria-hidden="true"></i>
+          <i class="bi bi-clipboard2-pulse" aria-hidden="true"></i>
           <strong>Internista</strong>
-          <span>142 lekarzy</span>
         </button>
         <button class="doctor-specialty-card" type="button" data-specialty-filter="ortopeda">
           <i class="bi bi-bandaid" aria-hidden="true"></i>
           <strong>Ortopeda</strong>
-          <span>87 lekarzy</span>
         </button>
-        <button class="doctor-specialty-card" type="button" data-specialty-filter="pediatra">
-          <i class="bi bi-emoji-smile" aria-hidden="true"></i>
-          <strong>Pediatra</strong>
-          <span>111 lekarzy</span>
+        <button class="doctor-specialty-card" type="button" data-specialty-filter="lekarz rodzinny">
+          <i class="bi bi-person-heart" aria-hidden="true"></i>
+          <strong>Lekarz rodzinny</strong>
         </button>
         <button
           class="doctor-specialty-card"
@@ -65,7 +74,6 @@
         >
           <i class="bi bi-arrow-right" aria-hidden="true"></i>
           <strong>Zobacz więcej</strong>
-          <span>21 specjalizacji</span>
         </button>
       </div>
     </section>
@@ -105,7 +113,7 @@
           </div>
           <div class="doctor-row-meta">
             <span>Tryb wizyty</span>
-            <strong>{% if loop.first %}Stacjonarna, Online{% else %}Stacjonarna{% endif %}</strong>
+            <strong>{{ lekarz["tryb_wizyty"] }}</strong>
           </div>
           <div class="doctor-row-actions">
             <a
@@ -115,52 +123,28 @@
               <i class="bi bi-calendar-check" aria-hidden="true"></i>
               Umów wizytę
             </a>
-            <button class="doctor-profile-button" type="button" data-app-message="Profil lekarza dodamy jako osobny widok po backendzie lekarzy.">Zobacz profil</button>
+            <button
+              class="doctor-profile-button"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#doctorProfileModal"
+              data-doctor-name="lek. {{ lekarz['imie'] }} {{ lekarz['nazwisko'] }}"
+              data-doctor-specialty="{{ lekarz['specjalizacja'] }}"
+              data-doctor-location="{{ lekarz['lokalizacja'] }}"
+              data-doctor-mode="{{ lekarz['tryb_wizyty'] }}"
+            >
+              Zobacz profil
+            </button>
           </div>
         </article>
         {% endfor %}
 
-        <article
-          class="doctor-list-row"
-          data-specialty="ortopeda"
-          data-city="warszawa"
-          data-mode="stacjonarna, online"
-          data-available-today="false"
-          data-nearby="true"
-        >
-          <div class="doctor-avatar warm">MW</div>
-          <div class="doctor-row-main">
-            <strong>lek. Michał Wiśniewski <i class="bi bi-patch-check-fill" aria-hidden="true"></i></strong>
-            <span>Ortopeda</span>
-            <small><i class="bi bi-geo-alt" aria-hidden="true"></i> Centrum Ortopedyczne, Warszawa</small>
-            <em><i class="bi bi-star-fill" aria-hidden="true"></i> 4.8 (87 opinii)</em>
-          </div>
-          <div class="doctor-row-meta">
-            <span>Najbliższy termin</span>
-            <strong>Jutro, 14:00</strong>
-            <small>Dostępna jutro</small>
-          </div>
-          <div class="doctor-row-meta">
-            <span>Tryb wizyty</span>
-            <strong>Stacjonarna, Online</strong>
-          </div>
-          <div class="doctor-row-actions">
-            <a
-              class="doctor-book-button"
-              href="/szybki-zapis?lekarz_id=3"
-            >
-              <i class="bi bi-calendar-check" aria-hidden="true"></i>
-              Umów wizytę
-            </a>
-            <button class="doctor-profile-button" type="button" data-app-message="Profil lekarza dodamy jako osobny widok po backendzie lekarzy.">Zobacz profil</button>
-          </div>
-        </article>
       </div>
       <div class="empty-page-state compact doctor-empty-state" hidden>
         Nie znaleziono lekarza pasującego do wybranych filtrów.
       </div>
       <div class="doctor-list-more">
-        <button type="button" data-app-message="W widoku demo pokazujemy najważniejszych lekarzy. Pełną paginację dodamy z backendem.">
+        <button type="button" data-bs-toggle="modal" data-bs-target="#allDoctorsModal">
           Zobacz więcej lekarzy
           <i class="bi bi-chevron-down" aria-hidden="true"></i>
         </button>
@@ -179,10 +163,16 @@
       <span class="doctor-help-kicker"><i class="bi bi-headset" aria-hidden="true"></i> Potrzebujesz pomocy?</span>
       <h2>Nie wiesz, którego lekarza wybrać?</h2>
       <p>Opisz objawy, a system podpowie specjalizację i właściwy typ wizyty.</p>
-      <a class="doctor-symptoms-button" href="/szybki-zapis">
+      {% if ostatnie_zgloszenie_objawow %}
+      <div class="doctor-last-symptoms">
+        <span>Ostatnia sugestia</span>
+        <strong>{{ ostatnie_zgloszenie_objawow["sugerowana_specjalizacja"] }}</strong>
+      </div>
+      {% endif %}
+      <button class="doctor-symptoms-button" type="button" data-bs-toggle="modal" data-bs-target="#symptomsModal">
         <i class="bi bi-ui-checks-grid" aria-hidden="true"></i>
         Opisz objawy
-      </a>
+      </button>
     </section>
 
     <section class="section-card recent-doctors-card">
@@ -211,27 +201,18 @@
         <a class="section-link" href="/apteki">Zobacz wszystkie</a>
       </div>
       <div class="trusted-facilities-list">
+        {% for placowka in placowki %}
         <article>
-          <i class="bi bi-hospital" aria-hidden="true"></i>
+          <i class="bi {% if 'Ortopedyczne' in placowka['nazwa'] %}bi-heart-pulse{% elif 'Derm' in placowka['nazwa'] %}bi-prescription2{% else %}bi-hospital{% endif %}" aria-hidden="true"></i>
           <div>
-            <strong>Centrum Medyczne Zdrowie</strong>
-            <span><i class="bi bi-star-fill" aria-hidden="true"></i> 4.9 (1.2k) · 1.2 km</span>
+            <strong>{{ placowka["nazwa"] }}</strong>
+            <span>
+              <i class="bi bi-geo-alt" aria-hidden="true"></i>
+              {{ placowka["adres"] or placowka["miasto"] }}
+            </span>
           </div>
         </article>
-        <article>
-          <i class="bi bi-heart-pulse" aria-hidden="true"></i>
-          <div>
-            <strong>Centrum Ortopedyczne</strong>
-            <span><i class="bi bi-star-fill" aria-hidden="true"></i> 4.8 (856) · 2.7 km</span>
-          </div>
-        </article>
-        <article>
-          <i class="bi bi-prescription2" aria-hidden="true"></i>
-          <div>
-            <strong>Dermacenter</strong>
-            <span><i class="bi bi-star-fill" aria-hidden="true"></i> 4.7 (623) · 3.1 km</span>
-          </div>
-        </article>
+        {% endfor %}
       </div>
     </section>
   </aside>
@@ -261,6 +242,7 @@
             <label><input type="checkbox" value="dermatolog" data-filter-specialty> Dermatolog</label>
             <label><input type="checkbox" value="internista" data-filter-specialty> Internista</label>
             <label><input type="checkbox" value="ortopeda" data-filter-specialty> Ortopeda</label>
+            <label><input type="checkbox" value="lekarz rodzinny" data-filter-specialty> Lekarz rodzinny</label>
           </section>
           <section>
             <h3>Lokalizacja</h3>
@@ -308,6 +290,7 @@
             <label><input type="checkbox" value="dermatolog" data-doctor-more-specialty> Dermatolog</label>
             <label><input type="checkbox" value="internista" data-doctor-more-specialty> Internista</label>
             <label><input type="checkbox" value="ortopeda" data-doctor-more-specialty> Ortopeda</label>
+            <label><input type="checkbox" value="lekarz rodzinny" data-doctor-more-specialty> Lekarz rodzinny</label>
           </section>
         </div>
       </div>
@@ -318,6 +301,130 @@
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="doctorProfileModal"
+  tabindex="-1"
+  aria-labelledby="doctorProfileModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal doctor-filters-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Profil lekarza</p>
+          <h2 class="modal-title fs-5" id="doctorProfileModalLabel" data-profile-name>Lekarz</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="doctor-profile-summary">
+          <div class="doctor-avatar" data-profile-initials>LK</div>
+          <div>
+            <strong data-profile-specialty>Specjalizacja</strong>
+            <span><i class="bi bi-geo-alt" aria-hidden="true"></i> <span data-profile-location>Placówka</span></span>
+            <span><i class="bi bi-camera-video" aria-hidden="true"></i> <span data-profile-mode>Tryb wizyty</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+        <a class="modal-primary-button" href="/szybki-zapis" data-profile-book-link>Umów wizytę</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="allDoctorsModal"
+  tabindex="-1"
+  aria-labelledby="allDoctorsModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content appointment-modal doctor-filters-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Lekarze</p>
+          <h2 class="modal-title fs-5" id="allDoctorsModalLabel">Wszyscy dostępni lekarze</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-pharmacy-list">
+          {% for lekarz in lekarze %}
+          <article>
+            <div class="doctor-avatar small">{{ lekarz["imie"][0] }}{{ lekarz["nazwisko"][0] }}</div>
+            <div>
+              <strong>lek. {{ lekarz["imie"] }} {{ lekarz["nazwisko"] }}</strong>
+              <span>{{ lekarz["specjalizacja"] }}</span>
+              <small>{{ lekarz["lokalizacja"] }}</small>
+            </div>
+            <a class="section-link" href="/szybki-zapis?lekarz_id={{ lekarz['id'] }}">Umów</a>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="symptomsModal"
+  tabindex="-1"
+  aria-labelledby="symptomsModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content appointment-modal doctor-filters-modal symptoms-modal" method="post" action="/lekarze-widok/objawy">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Opis objawów</p>
+          <h2 class="modal-title fs-5" id="symptomsModalLabel">Co Ci dolega?</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="symptoms-grid" aria-label="Lista objawów">
+          <label><input type="checkbox" name="objawy" value="ból w klatce piersiowej"> Ból w klatce piersiowej</label>
+          <label><input type="checkbox" name="objawy" value="duszność"> Duszność</label>
+          <label><input type="checkbox" name="objawy" value="wysypka"> Wysypka</label>
+          <label><input type="checkbox" name="objawy" value="świąd skóry"> Świąd skóry</label>
+          <label><input type="checkbox" name="objawy" value="ból pleców"> Ból pleców</label>
+          <label><input type="checkbox" name="objawy" value="ból stawu"> Ból stawu</label>
+          <label><input type="checkbox" name="objawy" value="gorączka"> Gorączka</label>
+          <label><input type="checkbox" name="objawy" value="osłabienie"> Osłabienie</label>
+        </div>
+
+        <label class="symptoms-field">
+          Pilność
+          <select name="pilnosc">
+            <option value="standardowa">Standardowa</option>
+            <option value="pilna">Pilna</option>
+            <option value="kontrolna">Kontrolna</option>
+          </select>
+        </label>
+
+        <label class="symptoms-field">
+          Dodatkowy opis
+          <textarea name="opis" rows="4" placeholder="Napisz krótko od kiedy trwają objawy i co najbardziej przeszkadza."></textarea>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-secondary-button" type="button" data-bs-dismiss="modal">Anuluj</button>
+        <button class="modal-primary-button" type="submit">
+          Zapisz objawy
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}
@@ -333,6 +440,7 @@
   const clearDoctorFiltersButton = document.querySelector("[data-clear-doctor-filters]");
   const applyDoctorSpecialtiesButton = document.querySelector("[data-apply-doctor-specialties]");
   const clearDoctorSpecialtiesButton = document.querySelector("[data-clear-doctor-specialties]");
+  const doctorProfileModal = document.querySelector("#doctorProfileModal");
 
   let activeDoctorTab = "all";
 
@@ -483,6 +591,24 @@
       activeDoctorTab = tab.dataset.doctorTab || "all";
       filterDoctorRows();
     });
+  });
+
+  doctorProfileModal?.addEventListener("show.bs.modal", (event) => {
+    const button = event.relatedTarget;
+    const name = button?.dataset.doctorName || "Lekarz";
+    const cleanName = name.replace("lek. ", "");
+    const initials = cleanName
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+    doctorProfileModal.querySelector("[data-profile-name]").textContent = name;
+    doctorProfileModal.querySelector("[data-profile-initials]").textContent = initials;
+    doctorProfileModal.querySelector("[data-profile-specialty]").textContent = button?.dataset.doctorSpecialty || "";
+    doctorProfileModal.querySelector("[data-profile-location]").textContent = button?.dataset.doctorLocation || "";
+    doctorProfileModal.querySelector("[data-profile-mode]").textContent = button?.dataset.doctorMode || "";
   });
 
   filterDoctorRows();

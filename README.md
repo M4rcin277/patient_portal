@@ -13,6 +13,8 @@ Celem projektu jest stworzenie prostego portalu pacjenta z widokami renderowanym
 - Jinja2
 - Bootstrap 5
 - Bootstrap Icons
+- SQLAlchemy
+- SQLite lokalnie jako etap przygotowania bazy
 - PostgreSQL w późniejszym etapie
 - Docker w późniejszym etapie
 - GitHub, branche i Pull Requesty
@@ -47,7 +49,7 @@ Aktualnie zrobione są między innymi:
 - widok historii medycznej,
 - widok ustawień.
 
-Na tym etapie dane są przechowywane tymczasowo w listach Pythonowych w `app/dane.py`. W kolejnych etapach zostaną przeniesione do PostgreSQL.
+Na tym etapie aplikacja czyta dane przez repozytoria z lokalnej bazy SQLite zarządzanej przez SQLAlchemy. Plik `app/seed_data.py` zawiera dane demo używane tylko przez skrypt seedujący bazę. Kolejnym większym krokiem będzie podmiana SQLite na PostgreSQL.
 
 ---
 
@@ -58,7 +60,10 @@ Najważniejsze pliki i katalogi:
 ```text
 app/
   main.py
-  dane.py
+  database.py
+  init_db.py
+  seed_db.py
+  seed_data.py
   pomocnicy.py
   schematy.py
 
@@ -70,6 +75,33 @@ app/
     wizyty.py
     szybki_zapis.py
     statusy_wizyt.py
+
+  repositories/
+    apteki_repo.py
+    godziny_przyjec_repo.py
+    historia_repo.py
+    leki_repo.py
+    pacjenci_repo.py
+    lekarze_repo.py
+    plan_opieki_repo.py
+    recepty_repo.py
+    wizyty_repo.py
+
+  models/
+    uzytkownik.py
+    apteka.py
+    godzina_przyjec.py
+    pacjent.py
+    pacjent_lek.py
+    lekarz.py
+    wizyta.py
+    specjalizacja.py
+    placowka.py
+    plan_opieki.py
+    recepta.py
+    lek.py
+    recepta_lek.py
+    historia_medyczna.py
 
   templates/
     base.html
@@ -93,14 +125,22 @@ app/
 Podział odpowiedzialności:
 
 - `main.py` tworzy aplikację FastAPI, podpina pliki statyczne i routery.
+- `database.py` zawiera konfigurację SQLAlchemy: adres bazy, silnik połączenia, sesję i funkcję `get_db()`.
+- `init_db.py` tworzy tabele w lokalnej bazie danych na podstawie modeli SQLAlchemy.
+- `seed_db.py` dodaje do bazy dane startowe z `app/seed_data.py`.
+- `seed_data.py` zawiera dane demo używane wyłącznie do wypełnienia pustej bazy.
 - `routes/strony.py` obsługuje widoki HTML.
 - `routes/api.py` obsługuje endpointy API zwracające JSON.
 - `services/wizyty.py` zawiera logikę biznesową wizyt.
 - `services/szybki_zapis.py` przygotowuje dane dla widoku szybkiego zapisu.
 - `services/statusy_wizyt.py` mapuje błędy i statusy akcji na komunikaty dla widoków.
-- `pomocnicy.py` zawiera funkcje pomocnicze do wyszukiwania i formatowania danych.
+- `repositories/` zawiera funkcje dostępu do danych i komunikuje się z bazą przez SQLAlchemy.
+- `models/` zawiera modele SQLAlchemy opisujące tabele bazy danych.
+- `pomocnicy.py` zawiera funkcje pomocnicze do formatowania i przygotowywania danych pod widoki.
 - `templates/` zawiera szablony Jinja2.
 - `static/` zawiera CSS, fonty i grafiki.
+
+Szczegółowy opis tabel, relacji i decyzji projektowych znajduje się w `DATABASE_SCHEMA.md`.
 
 ---
 
@@ -160,6 +200,29 @@ http://127.0.0.1:8000/docs
 .\.venv\Scripts\activate
 ```
 
+### Konfiguracja środowiska
+
+Projekt ma plik `.env.example` z przykładową konfiguracją. Prywatny plik `.env` nie powinien trafiać do Gita.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Domyślnie aplikacja używa lokalnej bazy SQLite:
+
+```env
+DATABASE_URL=sqlite:///./patient_portal.db
+```
+
+### Przygotowanie lokalnej bazy danych
+
+```powershell
+python -m app.init_db
+python -m app.seed_db
+```
+
+`init_db` tworzy tabele w lokalnej bazie danych na podstawie modeli SQLAlchemy, a `seed_db` wypełnia je danymi demonstracyjnymi z `app/seed_data.py`.
+
 ### Uruchomienie aplikacji
 
 ```powershell
@@ -189,16 +252,14 @@ http://127.0.0.1:8000/profil
 
 ## Planowane funkcjonalności
 
-- dalsze porządkowanie struktury plików,
-- przygotowanie danych pod przyszłe tabele w PostgreSQL,
+- podmiana lokalnego SQLite na PostgreSQL,
+- migracje bazy danych, np. Alembic,
 - logowanie użytkowników,
 - odejście od tymczasowego `pacjent_id = 1`,
 - panel lekarza,
-- rozbudowa recept i leków po zaprojektowaniu bazy danych,
-- pełna historia medyczna pacjenta,
+- dalsza rozbudowa recept, leków i historii medycznej,
 - wyszukiwarka i filtrowanie lekarzy,
 - prawdziwe dane placówek i lokalizacji,
-- PostgreSQL,
 - Docker Compose,
 - testy automatyczne,
 - CI/CD GitHub Actions.
@@ -207,4 +268,4 @@ http://127.0.0.1:8000/profil
 
 ## Status projektu
 
-Projekt jest rozwijany etapami. Obecny etap skupia się na dopracowaniu logiki wizyt, uporządkowaniu warstw aplikacji oraz przygotowaniu projektu do dalszego rozwoju backendu i bazy danych.
+Projekt jest rozwijany etapami. Obecny etap skupia się na działającym przepływie danych przez modele SQLAlchemy, repozytoria i lokalną bazę SQLite, aby później bezpiecznie przejść na PostgreSQL.

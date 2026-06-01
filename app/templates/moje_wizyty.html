@@ -67,7 +67,7 @@
       <span class="large-calendar-day-name">Nd</span>
 
       {% for dzien in kalendarz_wizyt["dni"] %}
-      <div class="large-calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['ma_wizyte'] %} has-visit visit-{{ dzien['typ_wizyty'] }}{% endif %}">
+      <div class="large-calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['czy_dzisiaj'] and not dzien['ma_wizyte'] %} is-today{% endif %}{% if dzien['ma_wizyte'] %} has-visit visit-{{ dzien['typ_wizyty'] }}{% endif %}">
         <span>{{ dzien["numer"] }}</span>
         {% if dzien["ma_wizyte"] %}
         <strong>{{ dzien["wizyta"]["godzina"] }}</strong>
@@ -79,6 +79,7 @@
 
     <div class="calendar-legend" aria-label="Legenda kalendarza">
       <span><i class="legend-dot planned"></i>Zaplanowane</span>
+      <span><i class="legend-dot online"></i>Online</span>
       <span><i class="legend-dot today"></i>Dzisiaj</span>
       <span><i class="legend-dot past"></i>Minione</span>
       <span><i class="legend-dot reminder"></i>Przypomnienie</span>
@@ -88,16 +89,6 @@
   <section class="section-card visits-list-card">
     <div class="visits-list-heading">
       <h2 class="section-title">Nadchodzące wizyty</h2>
-      <div class="visits-list-tools">
-        <label class="visits-search">
-          <i class="bi bi-search" aria-hidden="true"></i>
-          <input type="search" placeholder="Wyszukaj wizytę, lekarza lub specjalizację...">
-        </label>
-      <button class="filter-button" type="button" data-app-message="Filtry wizyt podepniemy do statusów i specjalizacji po uporządkowaniu backendu.">
-          <i class="bi bi-funnel" aria-hidden="true"></i>
-          Filtry
-        </button>
-      </div>
     </div>
 
     {% if nadchodzace_wizyty %}
@@ -203,7 +194,14 @@
     <section class="section-card appointments-panel">
       <div class="section-card-header">
         <h2 class="section-title">Lista wizyt</h2>
-        <a class="section-link" href="/moje-wizyty">Zobacz wszystkie <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        <button
+          class="section-link section-link-button"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#allVisitsModal"
+        >
+          Zobacz wszystkie <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
       </div>
 
       {% if nadchodzace_wizyty|length > 1 %}
@@ -224,6 +222,14 @@
             <small>{{ wizyta["godzina"] }}</small>
             <strong>{{ wizyta["specjalizacja"] }}</strong>
             <small>{{ wizyta["lekarz"] }}</small>
+            <small>
+              <i class="bi {% if wizyta['typ_realizacji'] == 'online' %}bi-camera-video{% else %}bi-geo-alt{% endif %}" aria-hidden="true"></i>
+              {% if wizyta["typ_realizacji"] == "online" %}
+              Online
+              {% else %}
+              {{ wizyta["lokalizacja"] }}
+              {% endif %}
+            </small>
           </span>
           <i class="bi bi-chevron-right" aria-hidden="true"></i>
         </button>
@@ -287,7 +293,13 @@
           </div>
           <div>
             <strong>{{ wizyta["lekarz"] }}</strong>
-            <span>{{ wizyta["lokalizacja"] }}</span>
+            <span>
+              {% if wizyta["typ_realizacji"] == "online" %}
+              Online
+              {% else %}
+              {{ wizyta["lokalizacja"] }}
+              {% endif %}
+            </span>
           </div>
         </div>
 
@@ -315,9 +327,28 @@
           <p>{{ wizyta["notatka"] }}</p>
         </div>
 
-        <form class="appointment-reschedule-form" method="post" action="/moje-wizyty/{{ wizyta['id'] }}/przesun">
+        <div class="appointment-modal-place">
+          <span>
+            <i class="bi {% if wizyta['typ_realizacji'] == 'online' %}bi-camera-video{% else %}bi-geo-alt{% endif %}" aria-hidden="true"></i>
+            Miejsce wizyty
+          </span>
+          {% if wizyta["typ_realizacji"] == "online" %}
+          <strong>Online</strong>
+          <p>Link do konsultacji zostanie wysłany na adres e-mail 5 minut przed wizytą.</p>
+          {% else %}
+          <strong>{{ wizyta["lokalizacja"] }}</strong>
+          <p>Przyjdź około 10 minut wcześniej, żeby spokojnie przejść formalności.</p>
+          {% endif %}
+        </div>
+
+        <form
+          class="appointment-reschedule-form appointment-reschedule-form-compact collapse"
+          method="post"
+          action="/moje-wizyty/{{ wizyta['id'] }}/przesun"
+          id="przesunWizyteForm{{ wizyta['id'] }}"
+        >
           <div>
-            <label for="dataPrzesuniecia{{ wizyta['id'] }}">Nowa data</label>
+            <label for="dataPrzesuniecia{{ wizyta['id'] }}">Data</label>
             <input
               id="dataPrzesuniecia{{ wizyta['id'] }}"
               type="date"
@@ -339,22 +370,107 @@
           </div>
           <button class="appointment-secondary-action" type="submit">
             <i class="bi bi-calendar-event" aria-hidden="true"></i>
-            Przenieś wizytę
+            Zapisz nowy termin
           </button>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+        <button
+          class="appointment-secondary-action"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#przesunWizyteForm{{ wizyta['id'] }}"
+          aria-controls="przesunWizyteForm{{ wizyta['id'] }}"
+          aria-expanded="false"
+        >
+          <i class="bi bi-calendar-event" aria-hidden="true"></i>
+          Przenieś wizytę
+        </button>
         <form class="appointment-inline-form" method="post" action="/moje-wizyty/{{ wizyta['id'] }}/odwolaj">
           <button class="appointment-danger-action" type="submit" data-confirm-action="Czy na pewno odwołać tę wizytę?">
             <i class="bi bi-trash" aria-hidden="true"></i>
             Odwołaj wizytę
           </button>
         </form>
-        <a class="modal-primary-button" href="/szybki-zapis">Umów kolejną</a>
       </div>
     </div>
   </div>
 </div>
 {% endfor %}
+
+<div
+  class="modal fade"
+  id="allVisitsModal"
+  tabindex="-1"
+  aria-labelledby="allVisitsModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content appointment-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Wizyty pacjenta</p>
+          <h2 class="modal-title fs-5" id="allVisitsModalLabel">Wszystkie nadchodzące wizyty</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        {% if nadchodzace_wizyty %}
+        <div class="modal-visits-list">
+          {% for wizyta in nadchodzace_wizyty %}
+          <button
+            class="modal-visit-item"
+            type="button"
+            data-open-visit-modal="wizytaModal{{ wizyta['id'] }}"
+          >
+            <span class="appointment-list-date">
+              <strong>{{ wizyta["data_dzien"] }}</strong>
+              <span>{{ wizyta["data_miesiac_skrot"] }}</span>
+              <small>{{ wizyta["data_rok"] }}</small>
+            </span>
+            <span>
+              <strong>{{ wizyta["specjalizacja"] }}</strong>
+              <small>{{ wizyta["godzina"] }} · {{ wizyta["lekarz"] }}</small>
+              <small>{{ wizyta["lokalizacja"] }}</small>
+            </span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </button>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-page-state compact">
+          <i class="bi bi-calendar-x" aria-hidden="true"></i>
+          <strong>Brak nadchodzących wizyt</strong>
+          <span>Nowe terminy pojawią się tutaj po umówieniu wizyty.</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-open-visit-modal]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const allVisitsModalElement = document.querySelector("#allVisitsModal");
+      const targetModalElement = document.querySelector(`#${button.dataset.openVisitModal}`);
+
+      if (!allVisitsModalElement || !targetModalElement || !window.bootstrap) {
+        return;
+      }
+
+      const allVisitsModal = bootstrap.Modal.getOrCreateInstance(allVisitsModalElement);
+      const targetModal = bootstrap.Modal.getOrCreateInstance(targetModalElement);
+
+      allVisitsModalElement.addEventListener("hidden.bs.modal", () => targetModal.show(), { once: true });
+      allVisitsModal.hide();
+    });
+  });
+</script>
 {% endblock %}

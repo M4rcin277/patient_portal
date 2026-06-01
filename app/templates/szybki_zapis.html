@@ -44,7 +44,7 @@
       <strong>{{ termin["lekarz"]["specjalizacja"] }}</strong>
       <span>{{ termin["dzien_etykieta"] }}, {{ termin["godzina"] }}</span>
       <small>{{ termin["lekarz"]["imie"] }} {{ termin["lekarz"]["nazwisko"] }}</small>
-      <form class="recommended-slot-form" method="post" action="/szybki-zapis">
+      <form class="recommended-slot-form" method="post" action="/szybki-zapis" data-booking-confirm-form>
         <input type="hidden" name="lekarz_id" value="{{ termin['lekarz']['id'] }}">
         <input type="hidden" name="data" value="{{ termin['data'] }}">
         <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
@@ -59,7 +59,7 @@
     <article class="booking-contact-card">
       <strong>Potrzebujesz pomocy?</strong>
       <span>Nasi konsultanci są dostępni w dni robocze.</span>
-      <button type="button" data-app-message="Konsultant oddzwoni w najbliższym dniu roboczym.">
+      <button type="button" data-bs-toggle="modal" data-bs-target="#bookingHelpModal">
         <i class="bi bi-headset" aria-hidden="true"></i>
         Poproś o kontakt
       </button>
@@ -138,7 +138,7 @@
             <small><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ termin["lekarz"]["lokalizacja"] }}</small>
             <small><i class="bi bi-camera-video" aria-hidden="true"></i> {{ termin["lekarz"]["tryb_wizyty"] }}</small>
           </div>
-          <form class="slot-book-form" method="post" action="/szybki-zapis">
+          <form class="slot-book-form" method="post" action="/szybki-zapis" data-booking-confirm-form>
             <input type="hidden" name="lekarz_id" value="{{ termin['lekarz']['id'] }}">
             <input type="hidden" name="data" value="{{ termin['data'] }}">
             <input type="hidden" name="godzina" value="{{ termin['godzina'] }}">
@@ -241,7 +241,7 @@
           {{ najblizszy_dostepny_termin["godzina"] }}
         </strong>
         <small>{{ najblizszy_dostepny_termin["lekarz"]["lokalizacja"] }}</small>
-        <form class="booking-next-slot-form" method="post" action="/szybki-zapis">
+        <form class="booking-next-slot-form" method="post" action="/szybki-zapis" data-booking-confirm-form>
           <input type="hidden" name="lekarz_id" value="{{ najblizszy_dostepny_termin['lekarz']['id'] }}">
           <input type="hidden" name="data" value="{{ najblizszy_dostepny_termin['data'] }}">
           <input type="hidden" name="godzina" value="{{ najblizszy_dostepny_termin['godzina'] }}">
@@ -347,6 +347,7 @@
             method="post"
             action="/szybki-zapis"
             data-doctor-term-date="{{ termin['data'] }}"
+            data-booking-confirm-form
           >
             <input type="hidden" name="lekarz_id" value="{{ wybrany_lekarz['id'] }}">
             <input type="hidden" name="data" value="{{ termin['data'] }}">
@@ -383,6 +384,88 @@
   </div>
 </div>
 {% endif %}
+
+<div
+  class="modal fade"
+  id="bookingConfirmModal"
+  tabindex="-1"
+  aria-labelledby="bookingConfirmModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal booking-confirm-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Potwierdzenie wizyty</p>
+          <h2 class="modal-title fs-5" id="bookingConfirmModalLabel">Sprawdź termin przed rezerwacją</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="booking-confirm-summary">
+          <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+          <div>
+            <strong data-booking-confirm-title>Wybrany termin</strong>
+            <span data-booking-confirm-meta>Data i godzina wizyty</span>
+          </div>
+        </div>
+
+        <div class="booking-visit-type">
+          <span>Tryb wizyty</span>
+          <label>
+            <input type="radio" name="booking_visit_type" value="stacjonarnie" checked>
+            <strong>Stacjonarnie</strong>
+            <small>Wizyta w placówce medycznej.</small>
+          </label>
+          <label>
+            <input type="radio" name="booking_visit_type" value="online">
+            <strong>Online</strong>
+            <small>Konsultacja zdalna, jeśli lekarz ją obsługuje.</small>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Wybierz inny termin</button>
+        <button type="button" class="modal-primary-button" data-confirm-booking-submit>
+          Potwierdź rezerwację
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="bookingHelpModal"
+  tabindex="-1"
+  aria-labelledby="bookingHelpModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content appointment-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Pomoc przy rezerwacji</p>
+          <h2 class="modal-title fs-5" id="bookingHelpModalLabel">Skontaktuj się z konsultantem</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="booking-help-contact">
+          <i class="bi bi-headset" aria-hidden="true"></i>
+          <div>
+            <strong>Telefon kontaktowy: 22 000 00 00</strong>
+            <span>W nagłych sytuacjach dzwoń pod 112.</span>
+            <span>W prawdziwej aplikacji tutaj podłączymy numer rejestracji lub infolinii placówki.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -531,15 +614,99 @@
     modal.show();
   }
 
-  document.querySelectorAll(".slot-book-form, .recommended-slot-form, .booking-next-slot-form, .doctor-booking-slot").forEach((form) => {
-    form.addEventListener("submit", () => {
-      const button = form.querySelector("button");
+  let pendingBookingForm = null;
+  const bookingConfirmModalElement = document.querySelector("#bookingConfirmModal");
+  const bookingConfirmTitle = document.querySelector("[data-booking-confirm-title]");
+  const bookingConfirmMeta = document.querySelector("[data-booking-confirm-meta]");
 
-      if (button) {
-        button.textContent = "Rezerwuję...";
-        button.disabled = true;
+  function getBookingSummary(form) {
+    const slot = form.closest(".booking-slot");
+    const recommendedSlot = form.closest(".recommended-slot");
+    const nextSlot = form.closest(".booking-next-slot");
+    const doctorSlot = form.closest(".doctor-booking-slot");
+
+    if (slot) {
+      return {
+        title: slot.querySelector(".slot-main strong")?.textContent.trim() || "Wybrany lekarz",
+        meta: `${slot.querySelector(".slot-date small")?.textContent.trim() || "Wybrana data"}, ${slot.querySelector(".slot-date strong")?.textContent.trim() || "wybrana godzina"}`,
+      };
+    }
+
+    if (recommendedSlot) {
+      return {
+        title: recommendedSlot.querySelector("strong")?.textContent.trim() || "Rekomendowany termin",
+        meta: recommendedSlot.querySelector("span")?.textContent.trim() || "Wybrany termin",
+      };
+    }
+
+    if (nextSlot) {
+      return {
+        title: nextSlot.querySelector("strong")?.textContent.trim() || "Najbliższy dostępny termin",
+        meta: nextSlot.querySelector("small")?.textContent.trim() || "Wybrana placówka",
+      };
+    }
+
+    if (doctorSlot) {
+      return {
+        title: "Wybrany termin u lekarza",
+        meta: `${doctorSlot.querySelector("span")?.textContent.trim() || "Wybrana data"}, ${doctorSlot.querySelector("strong")?.textContent.trim() || "wybrana godzina"}`,
+      };
+    }
+
+    return {
+      title: "Wybrany termin",
+      meta: "Potwierdź dane wizyty przed rezerwacją.",
+    };
+  }
+
+  document.querySelectorAll("[data-booking-confirm-form]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      if (form.dataset.bookingConfirmed === "true") {
+        const button = form.querySelector("button");
+
+        if (button) {
+          button.textContent = "Rezerwuję...";
+          button.disabled = true;
+        }
+
+        return;
+      }
+
+      event.preventDefault();
+      pendingBookingForm = form;
+
+      const summary = getBookingSummary(form);
+      if (bookingConfirmTitle) {
+        bookingConfirmTitle.textContent = summary.title;
+      }
+      if (bookingConfirmMeta) {
+        bookingConfirmMeta.textContent = summary.meta;
+      }
+
+      if (bookingConfirmModalElement && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(bookingConfirmModalElement).show();
       }
     });
+  });
+
+  document.querySelector("[data-confirm-booking-submit]")?.addEventListener("click", () => {
+    if (!pendingBookingForm) {
+      return;
+    }
+
+    const selectedVisitType = document.querySelector("input[name='booking_visit_type']:checked")?.value || "stacjonarnie";
+    let visitTypeInput = pendingBookingForm.querySelector("input[name='tryb_wizyty']");
+
+    if (!visitTypeInput) {
+      visitTypeInput = document.createElement("input");
+      visitTypeInput.type = "hidden";
+      visitTypeInput.name = "tryb_wizyty";
+      pendingBookingForm.appendChild(visitTypeInput);
+    }
+
+    visitTypeInput.value = selectedVisitType;
+    pendingBookingForm.dataset.bookingConfirmed = "true";
+    pendingBookingForm.requestSubmit();
   });
 </script>
 {% endblock %}

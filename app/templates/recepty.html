@@ -11,9 +11,9 @@
 </header>
 
 <nav class="prescription-tabs" aria-label="Status recept">
-  <button class="active" type="button" data-prescription-tab="Aktywne">Aktywne <span>{{ recepty_pacjenta|length }}</span></button>
-  <button type="button" data-prescription-tab="Wygasające">Wygasające <span>2</span></button>
-  <button type="button" data-prescription-tab="Archiwum">Archiwum <span>18</span></button>
+  <button class="active" type="button" data-prescription-tab="aktywne">Aktywne <span>{{ licznik_recept["aktywne"] }}</span></button>
+  <button type="button" data-prescription-tab="wygasajace">Wygasające <span>{{ licznik_recept["wygasajace"] }}</span></button>
+  <button type="button" data-prescription-tab="archiwum">Archiwum <span>{{ licznik_recept["archiwum"] }}</span></button>
 </nav>
 
 <div class="prescription-feedback" data-prescription-feedback aria-live="polite"></div>
@@ -36,7 +36,7 @@
 
       <div class="prescription-list">
         {% for recepta in recepty_pacjenta %}
-        <article class="prescription-row prescription-row-{{ recepta['kolor'] }}">
+        <article class="prescription-row prescription-row-{{ recepta['kolor'] }}" data-prescription-status="{{ recepta['status'] }}">
           <div class="prescription-icon">
             <i class="bi {{ recepta['ikona'] }}" aria-hidden="true"></i>
           </div>
@@ -61,7 +61,7 @@
       </div>
 
       <button class="prescription-more-button" type="button" data-prescription-more>
-        Pokaż wszystkie aktywne recepty
+        Pokaż wszystkie recepty
         <i class="bi bi-chevron-down" aria-hidden="true"></i>
       </button>
     </section>
@@ -82,7 +82,7 @@
       <section class="section-card prescription-actions-card">
         <h2 class="section-title">Szybkie akcje</h2>
         <div class="prescription-actions-grid">
-          <button type="button" data-prescription-message="Pobieranie PDF będzie podpięte po dodaniu plików recept."><i class="bi bi-download" aria-hidden="true"></i> Pobierz receptę PDF</button>
+          <button type="button" data-prescription-download><i class="bi bi-download" aria-hidden="true"></i> Pobierz receptę PDF</button>
           <button type="button" data-prescription-share><i class="bi bi-share" aria-hidden="true"></i> Udostępnij receptę</button>
           <button type="button" data-prescription-message="Recepta została przygotowana do dodania do portfela."><i class="bi bi-wallet2" aria-hidden="true"></i> Dodaj do Apple Wallet</button>
           <button type="button" data-prescription-message="Przypomnienie o recepcie zostało ustawione lokalnie."><i class="bi bi-alarm" aria-hidden="true"></i> Ustaw przypomnienie</button>
@@ -131,10 +131,64 @@
         </article>
         {% endfor %}
       </div>
-      <a href="/leki">Zobacz więcej aptek <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+      <button
+        class="prescription-more-pharmacies"
+        type="button"
+        data-bs-toggle="modal"
+        data-bs-target="#allPharmaciesModal"
+      >
+        Zobacz więcej aptek <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
     </section>
   </aside>
 </section>
+
+<div
+  class="modal fade"
+  id="allPharmaciesModal"
+  tabindex="-1"
+  aria-labelledby="allPharmaciesModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content appointment-modal">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Apteki w pobliżu</p>
+          <h2 class="modal-title fs-5" id="allPharmaciesModalLabel">Gdzie zrealizować receptę?</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div class="prescription-map prescription-map-large" aria-label="Mapa aptek w pobliżu">
+          <i class="bi bi-geo-alt-fill prescription-map-pin primary" aria-hidden="true"></i>
+          <i class="bi bi-geo-alt-fill prescription-map-pin second" aria-hidden="true"></i>
+          <i class="bi bi-geo-alt-fill prescription-map-pin third" aria-hidden="true"></i>
+          <i class="bi bi-person-fill prescription-map-user" aria-hidden="true"></i>
+        </div>
+
+        <div class="modal-pharmacy-list">
+          {% for apteka in apteki %}
+          <article>
+            <i class="bi bi-prescription2" aria-hidden="true"></i>
+            <div>
+              <strong>{{ apteka["nazwa"] }}</strong>
+              <span>{{ apteka["adres"] }}</span>
+              <small>Godziny otwarcia: {{ apteka["godziny"] }}</small>
+            </div>
+            <span class="pharmacy-distance">
+              {% if loop.index == 1 %}350 m{% elif loop.index == 2 %}650 m{% else %}1,2 km{% endif %}
+            </span>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-secondary-button" data-bs-dismiss="modal">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -155,6 +209,27 @@
     }, 2600);
   }
 
+  function filterPrescriptionRows(selectedStatus, shouldNotify = true) {
+    let visibleCount = 0;
+
+    document.querySelectorAll(".prescription-row").forEach((row) => {
+      const isVisible = selectedStatus === "aktywne"
+        ? row.dataset.prescriptionStatus === "aktywne"
+        : row.dataset.prescriptionStatus === selectedStatus;
+
+      row.hidden = !isVisible;
+
+      if (isVisible) {
+        visibleCount += 1;
+      }
+    });
+
+    if (shouldNotify) {
+      const activeTabText = document.querySelector("[data-prescription-tab].active")?.textContent.trim() || "";
+      showPrescriptionMessage(`Pokazano recepty: ${activeTabText} (${visibleCount}).`);
+    }
+  }
+
   document.querySelectorAll("[data-prescription-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll("[data-prescription-tab]").forEach((tab) => {
@@ -162,7 +237,7 @@
       });
 
       button.classList.add("active");
-      showPrescriptionMessage(`Wybrano widok: ${button.dataset.prescriptionTab}. Dane podepniemy w backendzie.`);
+      filterPrescriptionRows(button.dataset.prescriptionTab);
     });
   });
 
@@ -193,7 +268,31 @@
   });
 
   document.querySelector("[data-prescription-more]")?.addEventListener("click", () => {
-    showPrescriptionMessage("Wszystkie aktywne recepty są już widoczne w tym widoku demo.");
+    document.querySelectorAll(".prescription-row").forEach((row) => {
+      row.hidden = false;
+    });
+    document.querySelectorAll("[data-prescription-tab]").forEach((tab) => {
+      tab.classList.remove("active");
+    });
+    showPrescriptionMessage("Pokazano wszystkie recepty pacjenta.");
+  });
+
+  document.querySelector("[data-prescription-download]")?.addEventListener("click", () => {
+    const code = document.querySelector("[data-prescription-code]")?.textContent.trim();
+    const content = [
+      "Portal Pacjenta - e-recepta",
+      `Kod recepty: ${code || "brak"}`,
+      "Dokument informacyjny wygenerowany lokalnie w przeglądarce.",
+    ].join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "e-recepta.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+    showPrescriptionMessage("Pobrano lokalny plik z kodem e-recepty.");
   });
 
   document.querySelector("[data-prescription-copy]")?.addEventListener("click", async () => {
@@ -228,5 +327,7 @@
       showPrescriptionMessage(button.dataset.prescriptionMessage);
     });
   });
+
+  filterPrescriptionRows("aktywne", false);
 </script>
 {% endblock %}

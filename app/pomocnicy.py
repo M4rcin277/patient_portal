@@ -1,7 +1,8 @@
 from calendar import monthrange
 from datetime import date, datetime
 
-from app.dane import godziny_przyjec, lekarze, pacjenci, wizyty
+from app.repositories.lekarze_repo import znajdz_lekarza
+from app.repositories.wizyty_repo import pobierz_wizyty_pacjenta as pobierz_surowe_wizyty_pacjenta
 
 
 POLSKIE_MIESIACE = [
@@ -77,31 +78,18 @@ def przygotuj_historie_medyczna(historia_medyczna):
     return sorted(wpisy, key=lambda wpis: wpis["data"], reverse=True)
 
 
-def znajdz_pacjenta(pacjent_id: int):
-    for pacjent in pacjenci:
-        if pacjent["id"] == pacjent_id:
-            return pacjent
-
-    return None
-
-
-def znajdz_lekarza(lekarz_id: int):
-    for lekarz in lekarze:
-        if lekarz["id"] == lekarz_id:
-            return lekarz
-
-    return None
-
-
-def przygotuj_wizyte_dla_pacjenta(wizyta):
-    lekarz = znajdz_lekarza(wizyta["lekarz_id"])
+def przygotuj_wizyte_dla_pacjenta(wizyta, db=None):
+    lekarz = znajdz_lekarza(wizyta["lekarz_id"], db)
     data_wizyty = date.fromisoformat(wizyta["data"])
+    notatka = wizyta["notatka"] or ""
+    typ_realizacji = "online" if "tryb wizyty: online" in notatka.lower() else "stacjonarnie"
 
     return {
         "id": wizyta["id"],
         "lekarz": f"{lekarz['imie']} {lekarz['nazwisko']}",
         "specjalizacja": lekarz["specjalizacja"],
         "lokalizacja": lekarz["lokalizacja"],
+        "tryb_wizyty": lekarz["tryb_wizyty"],
         "data": wizyta["data"],
         "data_czytelna": formatuj_date_po_polsku(wizyta["data"]),
         "data_dzien": f"{data_wizyty.day:02d}",
@@ -109,16 +97,16 @@ def przygotuj_wizyte_dla_pacjenta(wizyta):
         "data_rok": data_wizyty.year,
         "godzina": wizyta["godzina"],
         "status": wizyta["status"],
-        "notatka": wizyta["notatka"],
+        "notatka": notatka,
+        "typ_realizacji": typ_realizacji,
     }
 
 
-def pobierz_wizyty_pacjenta(pacjent_id: int):
+def pobierz_wizyty_pacjenta(pacjent_id: int, db=None):
     wizyty_pacjenta = []
 
-    for wizyta in wizyty:
-        if wizyta["pacjent_id"] == pacjent_id and wizyta["status"] != "odwolana":
-            wizyty_pacjenta.append(przygotuj_wizyte_dla_pacjenta(wizyta))
+    for wizyta in pobierz_surowe_wizyty_pacjenta(pacjent_id, db):
+        wizyty_pacjenta.append(przygotuj_wizyte_dla_pacjenta(wizyta, db))
 
     return wizyty_pacjenta
 
@@ -197,6 +185,7 @@ def przygotuj_kalendarz_wizyt(
                 + 1,
                 "wyciszony": True,
                 "ma_wizyte": False,
+                "czy_dzisiaj": False,
             }
         )
 
@@ -206,7 +195,9 @@ def przygotuj_kalendarz_wizyt(
         typ_wizyty = None
 
         if wizyta:
-            if data_dnia == dzisiaj:
+            if wizyta.get("typ_realizacji") == "online":
+                typ_wizyty = "online"
+            elif data_dnia == dzisiaj:
                 typ_wizyty = "dzisiaj"
             elif data_dnia > dzisiaj:
                 typ_wizyty = "przyszla"
@@ -218,6 +209,7 @@ def przygotuj_kalendarz_wizyt(
                 "numer": numer_dnia,
                 "wyciszony": False,
                 "ma_wizyte": wizyta is not None,
+                "czy_dzisiaj": data_dnia == dzisiaj,
                 "wizyta": wizyta,
                 "typ_wizyty": typ_wizyty,
             }
@@ -229,6 +221,7 @@ def przygotuj_kalendarz_wizyt(
                 "numer": "",
                 "wyciszony": True,
                 "ma_wizyte": False,
+                "czy_dzisiaj": False,
             }
         )
 
@@ -253,41 +246,3 @@ def przygotuj_kalendarz_wizyt(
         "dni": dni,
         "podpis": podpis,
     }
-
-
-def pobierz_wolne_godziny(lekarz_id: int, data: str):
-    zajete_godziny = []
-    for wizyta in wizyty:
-        if (
-            wizyta["lekarz_id"] == lekarz_id
-            and wizyta["data"] == data
-            and wizyta["status"] != "odwolana"
-        ):
-            zajete_godziny.append(wizyta["godzina"])
-
-    wolne_godziny = []
-
-    for godzina in godziny_przyjec:
-        if godzina not in zajete_godziny:
-            wolne_godziny.append(godzina)
-
-    return wolne_godziny
-
-
-def termin_jest_zajety(
-    lekarz_id: int,
-    data: str,
-    godzina: str,
-    pomin_wizyte_id: int | None = None,
-):
-    for wizyta in wizyty:
-        if (
-            wizyta["id"] != pomin_wizyte_id
-            and wizyta["lekarz_id"] == lekarz_id
-            and wizyta["data"] == data
-            and wizyta["godzina"] == godzina
-            and wizyta["status"] != "odwolana"
-        ):
-            return True
-
-    return False

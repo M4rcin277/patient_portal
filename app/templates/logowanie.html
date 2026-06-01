@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Logowanie | Portal Pacjenta</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    >
+    <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+    <link rel="stylesheet" href="/static/css/app.css?v=85">
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <section class="login-hero" aria-label="Portal pacjenta">
+        <header class="login-brand">
+          <span class="login-brand-mark">
+            <img src="/static/icons/HospHeart.png" alt="" aria-hidden="true">
+          </span>
+          <strong>PZU Zdrowie</strong>
+        </header>
+
+        <div class="login-copy">
+          <h1>Twoje zdrowie <span>w dobrych rękach</span></h1>
+          <p>Zarządzaj wizytami, lekami, receptami i wynikami badań w prosty i bezpieczny sposób.</p>
+        </div>
+
+        <div class="login-benefits" aria-label="Najważniejsze korzyści">
+          <article>
+            <i class="bi bi-shield-check" aria-hidden="true"></i>
+            <div>
+              <strong>Bezpiecznie</strong>
+              <span>Twoje dane są chronione</span>
+            </div>
+          </article>
+          <article>
+            <i class="bi bi-clock" aria-hidden="true"></i>
+            <div>
+              <strong>Wygodnie</strong>
+              <span>Wszystko w jednym miejscu</span>
+            </div>
+          </article>
+          <article>
+            <i class="bi bi-heart" aria-hidden="true"></i>
+            <div>
+              <strong>Dla Ciebie</strong>
+              <span>Dbamy o Twoje zdrowie</span>
+            </div>
+          </article>
+        </div>
+
+        <footer class="login-footer">
+          <span>© 2026 PZU Zdrowie</span>
+          <a href="/ustawienia">Polityka prywatności</a>
+          <a href="/ustawienia">Regulamin</a>
+        </footer>
+      </section>
+
+      <section class="login-card" aria-labelledby="loginTitle">
+        <div class="login-card-icon">
+          <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+        </div>
+        <h2 id="loginTitle">Zaloguj się</h2>
+        <p>Wprowadź swoje dane, aby kontynuować</p>
+
+        {% if komunikat_sukcesu %}
+        <div class="login-alert success">{{ komunikat_sukcesu }}</div>
+        {% endif %}
+
+        {% if komunikat_bledu %}
+        <div class="login-alert error">{{ komunikat_bledu }}</div>
+        {% endif %}
+
+        <form class="login-form" method="post" action="/logowanie">
+          <label>
+            <span class="visually-hidden">Adres e-mail</span>
+            <i class="bi bi-envelope" aria-hidden="true"></i>
+            <input type="email" name="email" autocomplete="email" placeholder="Adres e-mail" value="{{ email or '' }}" required>
+          </label>
+
+          <label>
+            <span class="visually-hidden">Hasło</span>
+            <i class="bi bi-lock" aria-hidden="true"></i>
+            <input type="password" name="haslo" autocomplete="current-password" placeholder="Hasło" required data-login-password>
+            <button type="button" data-toggle-login-password>Pokaż</button>
+          </label>
+
+          <div class="login-options">
+            <label>
+              <input type="checkbox" name="zapamietaj">
+              <span>Zapamiętaj mnie</span>
+            </label>
+            <a href="/ustawienia">Nie pamiętasz hasła?</a>
+          </div>
+
+          <button class="login-submit" type="submit">
+            Zaloguj się
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </button>
+        </form>
+
+        <div class="login-divider"><span>lub</span></div>
+
+        <button class="login-pzu-id" type="button">
+          <i class="bi bi-person-badge" aria-hidden="true"></i>
+          Zaloguj się przez PZU ID
+        </button>
+
+        <p class="login-register">
+          Nie masz konta?
+          <a href="/rejestracja">Załóż je teraz</a>
+        </p>
+      </section>
+    </main>
+
+    <script>
+      document.querySelector("[data-toggle-login-password]")?.addEventListener("click", (event) => {
+        const input = document.querySelector("[data-login-password]");
+        const button = event.currentTarget;
+
+        if (!input) {
+          return;
+        }
+
+        const shouldShowPassword = input.type === "password";
+        input.type = shouldShowPassword ? "text" : "password";
+        button.textContent = shouldShowPassword ? "Ukryj" : "Pokaż";
+      });
+    </script>
+  </body>
+</html>

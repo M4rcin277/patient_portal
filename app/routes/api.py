@@ -1,12 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-from app.dane import lekarze, wizyty
-from app.pomocnicy import (
-    pobierz_wizyty_pacjenta,
-    pobierz_wolne_godziny,
-    znajdz_lekarza,
-    znajdz_pacjenta,
-)
+from app.database import get_db
+from app.pomocnicy import pobierz_wizyty_pacjenta
+from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy, znajdz_lekarza
+from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.wizyty_repo import pobierz_wolne_godziny, pobierz_wszystkie_wizyty
 from app.schematy import NowaWizyta, PrzesuniecieWizyty
 from app.services.wizyty import (
     BrakDostepuDoWizyty,
@@ -69,13 +68,17 @@ def sprawdz_status():
 
 
 @router.get("/lekarze")
-def pobierz_lekarzy():
-    return lekarze
+def pobierz_lekarzy(db: Session = Depends(get_db)):
+    return pobierz_wszystkich_lekarzy(db)
 
 
 @router.get("/lekarze/{lekarz_id}/wolne-terminy")
-def pobierz_wolne_terminy(lekarz_id: int, data: str):
-    lekarz = znajdz_lekarza(lekarz_id)
+def pobierz_wolne_terminy(
+    lekarz_id: int,
+    data: str,
+    db: Session = Depends(get_db),
+):
+    lekarz = znajdz_lekarza(lekarz_id, db)
 
     if lekarz is None:
         raise HTTPException(
@@ -83,7 +86,7 @@ def pobierz_wolne_terminy(lekarz_id: int, data: str):
             detail="Lekarz o podanym id nie istnieje",
         )
 
-    wolne_godziny = pobierz_wolne_godziny(lekarz_id, data)
+    wolne_godziny = pobierz_wolne_godziny(lekarz_id, data, db)
 
     return {
         "lekarz_id": lekarz_id,
@@ -93,12 +96,12 @@ def pobierz_wolne_terminy(lekarz_id: int, data: str):
 
 
 @router.get("/wizyty")
-def pobierz_wizyty():
-    return wizyty
+def pobierz_wizyty(db: Session = Depends(get_db)):
+    return pobierz_wszystkie_wizyty(db)
 
 
 @router.post("/wizyty")
-def dodaj_wizyte(nowa_wizyta: NowaWizyta):
+def dodaj_wizyte(nowa_wizyta: NowaWizyta, db: Session = Depends(get_db)):
     try:
         return utworz_wizyte(
             pacjent_id=nowa_wizyta.pacjent_id,
@@ -106,6 +109,7 @@ def dodaj_wizyte(nowa_wizyta: NowaWizyta):
             data=nowa_wizyta.data,
             godzina=nowa_wizyta.godzina,
             notatka=nowa_wizyta.notatka,
+            db=db,
         )
     except (
         PacjentNieIstnieje,
@@ -118,11 +122,11 @@ def dodaj_wizyte(nowa_wizyta: NowaWizyta):
 
 
 @router.post("/wizyty/{wizyta_id}/odwolaj")
-def odwolaj_moja_wizyte(wizyta_id: int):
+def odwolaj_moja_wizyte(wizyta_id: int, db: Session = Depends(get_db)):
     pacjent_id = 1
 
     try:
-        return odwolaj_wizyte(wizyta_id, pacjent_id)
+        return odwolaj_wizyte(wizyta_id, pacjent_id, db)
     except (
         WizytaNieIstnieje,
         BrakDostepuDoWizyty,
@@ -133,7 +137,11 @@ def odwolaj_moja_wizyte(wizyta_id: int):
 
 
 @router.post("/wizyty/{wizyta_id}/przesun")
-def przesun_moja_wizyte(wizyta_id: int, przesuniecie: PrzesuniecieWizyty):
+def przesun_moja_wizyte(
+    wizyta_id: int,
+    przesuniecie: PrzesuniecieWizyty,
+    db: Session = Depends(get_db),
+):
     pacjent_id = 1
 
     try:
@@ -142,6 +150,7 @@ def przesun_moja_wizyte(wizyta_id: int, przesuniecie: PrzesuniecieWizyty):
             pacjent_id=pacjent_id,
             data=przesuniecie.data,
             godzina=przesuniecie.godzina,
+            db=db,
         )
     except (
         WizytaNieIstnieje,
@@ -155,14 +164,14 @@ def przesun_moja_wizyte(wizyta_id: int, przesuniecie: PrzesuniecieWizyty):
 
 
 @router.get("/pacjenci/ja")
-def pobierz_moj_profil():
+def pobierz_moj_profil(db: Session = Depends(get_db)):
     pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
 
     return pacjent
 
 
 @router.get("/pacjenci/ja/wizyty")
-def pobierz_moje_wizyty():
+def pobierz_moje_wizyty(db: Session = Depends(get_db)):
     pacjent_id = 1
-    return pobierz_wizyty_pacjenta(pacjent_id)
+    return pobierz_wizyty_pacjenta(pacjent_id, db)

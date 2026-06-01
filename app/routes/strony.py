@@ -1,26 +1,49 @@
 from datetime import date
 from urllib.parse import parse_qs
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
-from app.dane import (
-    apteki,
-    godziny_przyjec,
-    harmonogram_lekow,
-    historia_medyczna,
-    lekarze,
-    leki_pacjenta,
-    plan_opieki,
-    recepty_pacjenta,
-)
 from app.pomocnicy import (
     pobierz_nadchodzace_wizyty,
     pobierz_wizyty_pacjenta,
-    przygotuj_historie_medyczna,
     przygotuj_kalendarz_wizyt,
     znajdz_najblizsza_wizyte,
+)
+from app.database import get_db
+from app.repositories.apteki_repo import pobierz_apteki
+from app.repositories.godziny_przyjec_repo import pobierz_godziny_przyjec
+from app.repositories.historia_repo import pobierz_historie_medyczna_pacjenta
+from app.repositories.leki_repo import (
+    dodaj_lek_pacjenta,
+    pobierz_leki_pacjenta,
+    przygotuj_harmonogram_lekow,
+)
+from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy
+from app.repositories.objawy_repo import (
+    pobierz_ostatnie_zgloszenie_objawow,
+    zapisz_zgloszenie_objawow,
+)
+from app.repositories.pacjenci_repo import (
+    dodaj_pacjenta,
     znajdz_pacjenta,
+    znajdz_pacjenta_po_emailu,
+    zaktualizuj_pacjenta,
+)
+from app.repositories.placowki_repo import pobierz_placowki
+from app.repositories.plan_opieki_repo import pobierz_plan_opieki_pacjenta
+from app.repositories.recepty_repo import pobierz_recepty_pacjenta
+from app.repositories.uzytkownicy_repo import (
+    dodaj_uzytkownika_pacjenta,
+    znajdz_uzytkownika_po_emailu,
+)
+from app.services.auth import (
+    sprawdz_haslo,
+    ustaw_sesje_uzytkownika,
+    wymagaj_pacjenta_z_sesji,
+    wyczysc_sesje,
 )
 from app.services.statusy_wizyt import (
     STATUSY_WIZYT,
@@ -46,15 +69,165 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
+def odczytaj_formularz(dane: bytes):
+    return parse_qs(dane.decode("utf-8"))
+
+
+def odczytaj_date_z_formularza(wartosc: str):
+    if not wartosc:
+        return None
+
+    return date.fromisoformat(wartosc)
+
+
+@router.get("/logowanie")
+def widok_logowania(request: Request, status: str | None = None):
+    komunikat_bledu = None
+    komunikat_sukcesu = None
+
+    if status == "wymagane":
+        komunikat_bledu = "Zaloguj się, aby przejść do portalu pacjenta."
+    elif status == "wylogowano":
+        komunikat_sukcesu = "Wylogowano poprawnie."
+    elif status == "konto_utworzone":
+        komunikat_sukcesu = "Konto zostało utworzone. Możesz się zalogować."
+
+    return templates.TemplateResponse(
+        request,
+        "logowanie.html",
+        {
+            "komunikat_bledu": komunikat_bledu,
+            "komunikat_sukcesu": komunikat_sukcesu,
+        },
+    )
+
+
+@router.post("/logowanie")
+async def zaloguj_uzytkownika(request: Request, db: Session = Depends(get_db)):
+    dane_formularza = odczytaj_formularz(await request.body())
+    email = dane_formularza.get("email", [""])[0].strip().lower()
+    haslo = dane_formularza.get("haslo", [""])[0]
+    uzytkownik = znajdz_uzytkownika_po_emailu(email, db)
+
+    if not uzytkownik or not sprawdz_haslo(haslo, uzytkownik["haslo_hash"]):
+        return templates.TemplateResponse(
+            request,
+            "logowanie.html",
+            {
+                "komunikat_bledu": "Niepoprawny e-mail albo hasło.",
+                "komunikat_sukcesu": None,
+                "email": email,
+            },
+            status_code=400,
+        )
+
+    if uzytkownik["rola"] != "pacjent" or uzytkownik["pacjent_id"] is None:
+        return templates.TemplateResponse(
+            request,
+            "logowanie.html",
+            {
+                "komunikat_bledu": "To konto nie jest kontem pacjenta.",
+                "komunikat_sukcesu": None,
+                "email": email,
+            },
+            status_code=403,
+        )
+
+    ustaw_sesje_uzytkownika(request, uzytkownik)
+
+    return RedirectResponse(url="/panel-pacjenta", status_code=303)
+
+
+@router.get("/rejestracja")
+def widok_rejestracji(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "rejestracja.html",
+        {"komunikat_bledu": None},
+    )
+
+
+@router.post("/rejestracja")
+async def zarejestruj_pacjenta(request: Request, db: Session = Depends(get_db)):
+    dane_formularza = odczytaj_formularz(await request.body())
+    imie = dane_formularza.get("imie", [""])[0].strip()
+    nazwisko = dane_formularza.get("nazwisko", [""])[0].strip()
+    email = dane_formularza.get("email", [""])[0].strip().lower()
+    telefon = dane_formularza.get("telefon", [""])[0].strip()
+    adres = dane_formularza.get("adres", [""])[0].strip() or None
+    haslo = dane_formularza.get("haslo", [""])[0]
+    data_urodzenia_raw = dane_formularza.get("data_urodzenia", [""])[0].strip()
+
+    try:
+        data_urodzenia = odczytaj_date_z_formularza(data_urodzenia_raw)
+    except ValueError:
+        data_urodzenia = None
+
+    if not imie or not nazwisko or not email or not telefon or not haslo:
+        blad = "Uzupełnij imię, nazwisko, e-mail, telefon i hasło."
+    elif len(haslo) < 8:
+        blad = "Hasło powinno mieć co najmniej 8 znaków."
+    elif znajdz_uzytkownika_po_emailu(email, db) or znajdz_pacjenta_po_emailu(email, db):
+        blad = "Konto z takim adresem e-mail już istnieje."
+    else:
+        pacjent = dodaj_pacjenta(
+            imie=imie,
+            nazwisko=nazwisko,
+            email=email,
+            telefon=telefon,
+            data_urodzenia=data_urodzenia,
+            adres=adres,
+            db=db,
+        )
+        dodaj_uzytkownika_pacjenta(
+            email=email,
+            haslo=haslo,
+            pacjent_id=pacjent["id"],
+            db=db,
+        )
+
+        return RedirectResponse(
+            url="/logowanie?status=konto_utworzone",
+            status_code=303,
+        )
+
+    return templates.TemplateResponse(
+        request,
+        "rejestracja.html",
+        {
+            "komunikat_bledu": blad,
+            "formularz": {
+                "imie": imie,
+                "nazwisko": nazwisko,
+                "email": email,
+                "telefon": telefon,
+                "adres": adres,
+                "data_urodzenia": data_urodzenia_raw,
+            },
+        },
+        status_code=400,
+    )
+
+
+@router.post("/wyloguj")
+def wyloguj_uzytkownika(request: Request):
+    wyczysc_sesje(request)
+
+    return RedirectResponse(url="/logowanie?status=wylogowano", status_code=303)
+
+
 @router.get("/panel-pacjenta")
 def panel_pacjenta(
     request: Request,
     rok: int | None = None,
     miesiac: int | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
 ):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    plan_opieki = pobierz_plan_opieki_pacjenta(pacjent_id, db)
+    godziny_przyjec = pobierz_godziny_przyjec(db)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
     nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
     najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
     kalendarz_wizyt = przygotuj_kalendarz_wizyt(
@@ -129,10 +302,12 @@ def widok_moje_wizyty(
     rok: int | None = None,
     miesiac: int | None = None,
     status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
 ):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    godziny_przyjec = pobierz_godziny_przyjec(db)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
     nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
     najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
     kalendarz_wizyt = przygotuj_kalendarz_wizyt(
@@ -171,29 +346,44 @@ def widok_moje_wizyty(
 
 
 @router.get("/szybki-zapis")
-def widok_szybki_zapis(request: Request, lekarz_id: int | None = None):
+def widok_szybki_zapis(
+    request: Request,
+    lekarz_id: int | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        przygotuj_kontekst_szybkiego_zapisu(lekarz_id=lekarz_id),
+        przygotuj_kontekst_szybkiego_zapisu(
+            pacjent_id=pacjent_id,
+            lekarz_id=lekarz_id,
+            db=db,
+        ),
     )
 
 
 @router.post("/szybki-zapis")
-async def zapisz_szybki_zapis(request: Request):
-    pacjent_id = 1
-    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+async def zapisz_szybki_zapis(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
 
     try:
         lekarz_id = int(dane_formularza["lekarz_id"][0])
         data = dane_formularza["data"][0].strip()
         godzina = dane_formularza["godzina"][0].strip()
+        tryb_wizyty = dane_formularza.get("tryb_wizyty", ["stacjonarnie"])[0].strip()
     except (KeyError, IndexError, ValueError):
         return templates.TemplateResponse(
             request,
             "szybki_zapis.html",
             przygotuj_kontekst_szybkiego_zapisu(
-                "Nie udało się odczytać danych formularza."
+                pacjent_id=pacjent_id,
+                blad="Nie udało się odczytać danych formularza.",
+                db=db,
             ),
             status_code=400,
         )
@@ -204,7 +394,8 @@ async def zapisz_szybki_zapis(request: Request):
             lekarz_id=lekarz_id,
             data=data,
             godzina=godzina,
-            notatka="Wizyta umówiona przez szybki zapis",
+            notatka=f"Wizyta umówiona przez szybki zapis. Tryb wizyty: {tryb_wizyty}",
+            db=db,
         )
     except PacjentNieIstnieje:
         blad = "Nie znaleziono pacjenta."
@@ -222,17 +413,23 @@ async def zapisz_szybki_zapis(request: Request):
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        przygotuj_kontekst_szybkiego_zapisu(blad),
+        przygotuj_kontekst_szybkiego_zapisu(
+            pacjent_id=pacjent_id,
+            blad=blad,
+            db=db,
+        ),
         status_code=400,
     )
 
 
 @router.post("/moje-wizyty/{wizyta_id}/odwolaj")
-async def odwolaj_wizyte_html(wizyta_id: int):
-    pacjent_id = 1
-
+async def odwolaj_wizyte_html(
+    wizyta_id: int,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     try:
-        odwolaj_wizyte(wizyta_id, pacjent_id)
+        odwolaj_wizyte(wizyta_id, pacjent_id, db)
     except (
         WizytaNieIstnieje,
         BrakDostepuDoWizyty,
@@ -245,9 +442,13 @@ async def odwolaj_wizyte_html(wizyta_id: int):
 
 
 @router.post("/moje-wizyty/{wizyta_id}/przesun")
-async def przesun_wizyte_html(wizyta_id: int, request: Request):
-    pacjent_id = 1
-    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+async def przesun_wizyte_html(
+    wizyta_id: int,
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
 
     try:
         data = dane_formularza["data"][0].strip()
@@ -261,6 +462,7 @@ async def przesun_wizyte_html(wizyta_id: int, request: Request):
             pacjent_id=pacjent_id,
             data=data,
             godzina=godzina,
+            db=db,
         )
     except (
         WizytaNieIstnieje,
@@ -276,9 +478,19 @@ async def przesun_wizyte_html(wizyta_id: int, request: Request):
 
 
 @router.get("/recepty")
-def widok_recepty(request: Request):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+def widok_recepty(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    recepty = pobierz_recepty_pacjenta(pacjent_id, db)
+    apteki = pobierz_apteki(db)
+    licznik_recept = {
+        "aktywne": len([recepta for recepta in recepty if recepta["status"] == "aktywne"]),
+        "wygasajace": len([recepta for recepta in recepty if recepta["status"] == "wygasajace"]),
+        "archiwum": len([recepta for recepta in recepty if recepta["status"] == "archiwum"]),
+    }
 
     return templates.TemplateResponse(
         request,
@@ -286,16 +498,30 @@ def widok_recepty(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "recepty",
-            "recepty_pacjenta": recepty_pacjenta,
+            "recepty_pacjenta": recepty,
+            "licznik_recept": licznik_recept,
             "apteki": apteki,
         },
     )
 
 
 @router.get("/lekarze-widok")
-def widok_lekarze(request: Request):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+def widok_lekarze(
+    request: Request,
+    objawy_status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    komunikat_sukcesu = None
+    komunikat_bledu = None
+
+    if objawy_status == "zapisane":
+        komunikat_sukcesu = "Opis objawów został zapisany. System podpowiedział specjalizację na podstawie zgłoszenia."
+    elif objawy_status == "brak_danych":
+        komunikat_bledu = "Zaznacz objaw albo wpisz krótki opis dolegliwości."
+    elif objawy_status == "blad_mongo":
+        komunikat_bledu = "Nie udało się zapisać objawów w MongoDB. Sprawdź, czy baza jest uruchomiona."
 
     return templates.TemplateResponse(
         request,
@@ -303,15 +529,61 @@ def widok_lekarze(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "lekarze",
-            "lekarze": lekarze,
+            "lekarze": pobierz_wszystkich_lekarzy(db),
+            "placowki": pobierz_placowki(db),
+            "ostatnie_zgloszenie_objawow": pobierz_ostatnie_zgloszenie_objawow(pacjent_id),
+            "komunikat_sukcesu": komunikat_sukcesu,
+            "komunikat_bledu": komunikat_bledu,
         },
     )
 
 
+@router.post("/lekarze-widok/objawy")
+async def zapisz_objawy_pacjenta(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
+    objawy = dane_formularza.get("objawy", [])
+    opis = dane_formularza.get("opis", [""])[0]
+    pilnosc = dane_formularza.get("pilnosc", ["standardowa"])[0]
+
+    try:
+        zapisz_zgloszenie_objawow(
+            pacjent_id=pacjent_id,
+            objawy=objawy,
+            opis=opis,
+            pilnosc=pilnosc,
+        )
+    except ValueError:
+        status = "brak_danych"
+    except RuntimeError:
+        status = "blad_mongo"
+    else:
+        status = "zapisane"
+
+    return RedirectResponse(
+        url=f"/lekarze-widok?objawy_status={status}",
+        status_code=303,
+    )
+
+
 @router.get("/leki")
-def widok_leki(request: Request):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+def widok_leki(
+    request: Request,
+    status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    leki = pobierz_leki_pacjenta(pacjent_id, db)
+    komunikat_sukcesu = None
+    komunikat_bledu = None
+
+    if status == "lek_dodany":
+        komunikat_sukcesu = "Lek został dodany do listy pacjenta."
+    elif status == "niepoprawny_lek":
+        komunikat_bledu = "Uzupełnij nazwę leku i dawkowanie."
 
     return templates.TemplateResponse(
         request,
@@ -319,22 +591,56 @@ def widok_leki(request: Request):
         {
             "pacjent": pacjent,
             "aktywna_strona": "leki",
-            "leki_pacjenta": leki_pacjenta,
-            "harmonogram_lekow": harmonogram_lekow,
+            "leki_pacjenta": leki,
+            "harmonogram_lekow": przygotuj_harmonogram_lekow(leki),
+            "komunikat_sukcesu": komunikat_sukcesu,
+            "komunikat_bledu": komunikat_bledu,
         },
     )
 
 
+@router.post("/leki/dodaj")
+async def dodaj_lek_html(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
+    nazwa = dane_formularza.get("nazwa", [""])[0].strip()
+    dawkowanie = dane_formularza.get("dawkowanie", [""])[0].strip()
+    zalecenie = dane_formularza.get("zalecenie", [""])[0].strip()
+
+    if not nazwa or not dawkowanie:
+        return RedirectResponse(url="/leki?status=niepoprawny_lek", status_code=303)
+
+    dodaj_lek_pacjenta(
+        pacjent_id=pacjent_id,
+        nazwa=nazwa,
+        dawkowanie=dawkowanie,
+        zalecenie=zalecenie,
+        db=db,
+    )
+
+    return RedirectResponse(url="/leki?status=lek_dodany", status_code=303)
+
+
 @router.get("/apteki")
-def widok_apteki(request: Request):
-    return widok_leki(request)
+def widok_apteki(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    return widok_leki(request, pacjent_id=pacjent_id, db=db)
 
 
 @router.get("/historia")
-def widok_historia(request: Request):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    wpisy_historii = przygotuj_historie_medyczna(historia_medyczna)[:3]
+def widok_historia(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    wpisy_historii = pobierz_historie_medyczna_pacjenta(pacjent_id, db)[:3]
 
     return templates.TemplateResponse(
         request,
@@ -348,10 +654,15 @@ def widok_historia(request: Request):
 
 
 @router.get("/profil")
-def widok_profil(request: Request):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
-    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id)
+def widok_profil(
+    request: Request,
+    status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    pacjent = znajdz_pacjenta(pacjent_id, db)
+    plan_opieki = pobierz_plan_opieki_pacjenta(pacjent_id, db)
+    moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
     nadchodzace_wizyty = pobierz_nadchodzace_wizyty(moje_wizyty)
     najblizsza_wizyta = znajdz_najblizsza_wizyte(nadchodzace_wizyty)
     ostatnie_wizyty = sorted(
@@ -369,14 +680,54 @@ def widok_profil(request: Request):
             "najblizsza_wizyta": najblizsza_wizyta,
             "ostatnie_wizyty": ostatnie_wizyty,
             "plan_opieki": plan_opieki,
+            "komunikat_sukcesu": "Dane profilu zostały zapisane."
+            if status == "profil_zapisany"
+            else None,
         },
     )
 
 
+@router.post("/profil")
+async def aktualizuj_profil(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
+    imie = dane_formularza.get("imie", [""])[0].strip()
+    nazwisko = dane_formularza.get("nazwisko", [""])[0].strip()
+    telefon = dane_formularza.get("telefon", [""])[0].strip()
+    adres = dane_formularza.get("adres", [""])[0].strip() or None
+    grupa_krwi = dane_formularza.get("grupa_krwi", [""])[0].strip() or None
+    data_urodzenia_raw = dane_formularza.get("data_urodzenia", [""])[0].strip()
+
+    try:
+        data_urodzenia = odczytaj_date_z_formularza(data_urodzenia_raw)
+    except ValueError:
+        data_urodzenia = None
+
+    if imie and nazwisko and telefon:
+        zaktualizuj_pacjenta(
+            pacjent_id=pacjent_id,
+            imie=imie,
+            nazwisko=nazwisko,
+            telefon=telefon,
+            data_urodzenia=data_urodzenia,
+            adres=adres,
+            grupa_krwi=grupa_krwi,
+            db=db,
+        )
+
+    return RedirectResponse(url="/profil?status=profil_zapisany", status_code=303)
+
+
 @router.get("/ustawienia")
-def widok_ustawienia(request: Request):
-    pacjent_id = 1
-    pacjent = znajdz_pacjenta(pacjent_id)
+def widok_ustawienia(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    pacjent = znajdz_pacjenta(pacjent_id, db)
 
     return templates.TemplateResponse(
         request,

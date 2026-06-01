@@ -14,6 +14,20 @@
   </button>
 </header>
 
+{% if komunikat_sukcesu %}
+<div class="page-success-alert" data-auto-dismiss-alert>
+  <i class="bi bi-check-circle" aria-hidden="true"></i>
+  {{ komunikat_sukcesu }}
+</div>
+{% endif %}
+
+{% if komunikat_bledu %}
+<div class="page-error-alert" data-auto-dismiss-alert>
+  <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+  {{ komunikat_bledu }}
+</div>
+{% endif %}
+
 <section class="medicines-hero section-card">
   <div>
     <span class="section-kicker">Plan leczenia</span>
@@ -34,7 +48,7 @@
           <h2 class="section-title">Moje leki</h2>
           <p class="section-subtitle">Aktywne leki przypisane do Twojego planu leczenia.</p>
         </div>
-        <button class="secondary-action-button" type="button" data-app-message="Dodawanie własnego leku podepniemy po przygotowaniu formularza i walidacji.">
+        <button class="secondary-action-button" type="button" data-bs-toggle="modal" data-bs-target="#addMedicineModal">
           <i class="bi bi-plus-lg" aria-hidden="true"></i>
           Dodaj lek
         </button>
@@ -129,12 +143,44 @@
         </label>
         {% endfor %}
       </div>
-      <button class="medicine-reminders-button" type="button" data-app-message="Przypomnienia działają lokalnie w widoku. Backend zapamięta je później dla użytkownika.">
+      <button class="medicine-reminders-button" type="button">
         Zarządzaj przypomnieniami
       </button>
     </section>
   </aside>
 </section>
+
+<div class="modal fade" id="addMedicineModal" tabindex="-1" aria-labelledby="addMedicineModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content appointment-modal symptoms-modal" method="post" action="/leki/dodaj">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Własny lek</p>
+          <h2 class="modal-title fs-5" id="addMedicineModalLabel">Dodaj lek do widoku</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <label class="symptoms-field">
+          Nazwa leku
+          <input name="nazwa" type="text" maxlength="80" required placeholder="np. Magnez B6">
+        </label>
+        <label class="symptoms-field">
+          Dawkowanie
+          <input name="dawkowanie" type="text" maxlength="120" required placeholder="np. 1 tabletka dziennie">
+        </label>
+        <label class="symptoms-field">
+          Zalecenie
+          <textarea name="zalecenie" rows="3" maxlength="220" placeholder="np. przyjmować po posiłku"></textarea>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-secondary-button" type="button" data-bs-dismiss="modal">Anuluj</button>
+        <button class="modal-primary-button" type="submit">Dodaj</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -159,6 +205,12 @@
     textarea.addEventListener("input", () => {
       counter.textContent = `${textarea.value.length}/300`;
     });
+
+    textarea.addEventListener("blur", () => {
+      const savedText = textarea.value.trim() || "Brak zapisanej notatki.";
+      note.innerHTML = `${savedText}<span>${savedText.length}/300</span>`;
+      window.showAppToast?.("Notatka została zapisana lokalnie.");
+    });
   });
 
   document.querySelectorAll("[data-medicine-dose]").forEach((button) => {
@@ -173,6 +225,11 @@
 
       window.showAppToast?.(isTaken ? "Dawka oznaczona jako przyjęta." : "Cofnięto oznaczenie dawki.");
     });
+  });
+
+  document.querySelector(".medicine-reminders-button")?.addEventListener("click", () => {
+    const enabledCount = document.querySelectorAll(".medicine-reminder-row input:checked").length;
+    window.showAppToast?.(`Aktywne przypomnienia: ${enabledCount}.`);
   });
 </script>
 {% endblock %}
