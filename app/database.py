@@ -1,12 +1,31 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 
-DATABASE_URL = "sqlite:///./patient_portal.db"
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+
+if load_dotenv:
+    load_dotenv()
+
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./patient_portal.db")
+
+
+def pobierz_argumenty_polaczenia(database_url: str):
+    if database_url.startswith("sqlite"):
+        return {"check_same_thread": False}
+
+    return {}
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    connect_args=pobierz_argumenty_polaczenia(DATABASE_URL),
 )
 
 SessionLocal = sessionmaker(

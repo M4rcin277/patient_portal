@@ -200,6 +200,20 @@ http://127.0.0.1:8000/docs
 .\.venv\Scripts\activate
 ```
 
+### Konfiguracja środowiska
+
+Projekt ma plik `.env.example` z przykładową konfiguracją. Prywatny plik `.env` nie powinien trafiać do Gita.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Domyślnie aplikacja używa lokalnej bazy SQLite:
+
+```env
+DATABASE_URL=sqlite:///./patient_portal.db
+```
+
 ### Przygotowanie lokalnej bazy danych
 
 ```powershell
@@ -207,7 +221,7 @@ python -m app.init_db
 python -m app.seed_db
 ```
 
-`init_db` tworzy tabele w lokalnym pliku `patient_portal.db`, a `seed_db` wypełnia je danymi demonstracyjnymi z `app/seed_data.py`.
+`init_db` tworzy tabele w lokalnej bazie danych na podstawie modeli SQLAlchemy, a `seed_db` wypełnia je danymi demonstracyjnymi z `app/seed_data.py`.
 
 ### Uruchomienie aplikacji
 
