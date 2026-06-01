@@ -13,7 +13,7 @@
       rel="stylesheet"
     >
     <link rel="icon" type="image/png" href="/static/icons/favicon.png">
-    <link rel="stylesheet" href="/static/css/app.css?v=84">
+    <link rel="stylesheet" href="/static/css/app.css?v=85">
   </head>
   <body class="login-page">
     <main class="login-shell">
@@ -68,11 +68,19 @@
         <h2 id="loginTitle">Zaloguj się</h2>
         <p>Wprowadź swoje dane, aby kontynuować</p>
 
+        {% if komunikat_sukcesu %}
+        <div class="login-alert success">{{ komunikat_sukcesu }}</div>
+        {% endif %}
+
+        {% if komunikat_bledu %}
+        <div class="login-alert error">{{ komunikat_bledu }}</div>
+        {% endif %}
+
         <form class="login-form" method="post" action="/logowanie">
           <label>
             <span class="visually-hidden">Adres e-mail</span>
             <i class="bi bi-envelope" aria-hidden="true"></i>
-            <input type="email" name="email" autocomplete="email" placeholder="Adres e-mail" required>
+            <input type="email" name="email" autocomplete="email" placeholder="Adres e-mail" value="{{ email or '' }}" required>
           </label>
 
           <label>
@@ -105,7 +113,7 @@
 
         <p class="login-register">
           Nie masz konta?
-          <a href="/ustawienia">Załóż je teraz</a>
+          <a href="/rejestracja">Załóż je teraz</a>
         </p>
       </section>
     </main>

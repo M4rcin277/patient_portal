@@ -26,10 +26,25 @@ from app.repositories.objawy_repo import (
     pobierz_ostatnie_zgloszenie_objawow,
     zapisz_zgloszenie_objawow,
 )
-from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.pacjenci_repo import (
+    dodaj_pacjenta,
+    znajdz_pacjenta,
+    znajdz_pacjenta_po_emailu,
+    zaktualizuj_pacjenta,
+)
 from app.repositories.placowki_repo import pobierz_placowki
 from app.repositories.plan_opieki_repo import pobierz_plan_opieki_pacjenta
 from app.repositories.recepty_repo import pobierz_recepty_pacjenta
+from app.repositories.uzytkownicy_repo import (
+    dodaj_uzytkownika_pacjenta,
+    znajdz_uzytkownika_po_emailu,
+)
+from app.services.auth import (
+    sprawdz_haslo,
+    ustaw_sesje_uzytkownika,
+    wymagaj_pacjenta_z_sesji,
+    wyczysc_sesje,
+)
 from app.services.statusy_wizyt import (
     STATUSY_WIZYT,
     przekieruj_do_wizyt,
@@ -54,9 +69,151 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
+def odczytaj_formularz(dane: bytes):
+    return parse_qs(dane.decode("utf-8"))
+
+
+def odczytaj_date_z_formularza(wartosc: str):
+    if not wartosc:
+        return None
+
+    return date.fromisoformat(wartosc)
+
+
 @router.get("/logowanie")
-def widok_logowania(request: Request):
-    return templates.TemplateResponse(request, "logowanie.html", {})
+def widok_logowania(request: Request, status: str | None = None):
+    komunikat_bledu = None
+    komunikat_sukcesu = None
+
+    if status == "wymagane":
+        komunikat_bledu = "Zaloguj się, aby przejść do portalu pacjenta."
+    elif status == "wylogowano":
+        komunikat_sukcesu = "Wylogowano poprawnie."
+    elif status == "konto_utworzone":
+        komunikat_sukcesu = "Konto zostało utworzone. Możesz się zalogować."
+
+    return templates.TemplateResponse(
+        request,
+        "logowanie.html",
+        {
+            "komunikat_bledu": komunikat_bledu,
+            "komunikat_sukcesu": komunikat_sukcesu,
+        },
+    )
+
+
+@router.post("/logowanie")
+async def zaloguj_uzytkownika(request: Request, db: Session = Depends(get_db)):
+    dane_formularza = odczytaj_formularz(await request.body())
+    email = dane_formularza.get("email", [""])[0].strip().lower()
+    haslo = dane_formularza.get("haslo", [""])[0]
+    uzytkownik = znajdz_uzytkownika_po_emailu(email, db)
+
+    if not uzytkownik or not sprawdz_haslo(haslo, uzytkownik["haslo_hash"]):
+        return templates.TemplateResponse(
+            request,
+            "logowanie.html",
+            {
+                "komunikat_bledu": "Niepoprawny e-mail albo hasło.",
+                "komunikat_sukcesu": None,
+                "email": email,
+            },
+            status_code=400,
+        )
+
+    if uzytkownik["rola"] != "pacjent" or uzytkownik["pacjent_id"] is None:
+        return templates.TemplateResponse(
+            request,
+            "logowanie.html",
+            {
+                "komunikat_bledu": "To konto nie jest kontem pacjenta.",
+                "komunikat_sukcesu": None,
+                "email": email,
+            },
+            status_code=403,
+        )
+
+    ustaw_sesje_uzytkownika(request, uzytkownik)
+
+    return RedirectResponse(url="/panel-pacjenta", status_code=303)
+
+
+@router.get("/rejestracja")
+def widok_rejestracji(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "rejestracja.html",
+        {"komunikat_bledu": None},
+    )
+
+
+@router.post("/rejestracja")
+async def zarejestruj_pacjenta(request: Request, db: Session = Depends(get_db)):
+    dane_formularza = odczytaj_formularz(await request.body())
+    imie = dane_formularza.get("imie", [""])[0].strip()
+    nazwisko = dane_formularza.get("nazwisko", [""])[0].strip()
+    email = dane_formularza.get("email", [""])[0].strip().lower()
+    telefon = dane_formularza.get("telefon", [""])[0].strip()
+    adres = dane_formularza.get("adres", [""])[0].strip() or None
+    haslo = dane_formularza.get("haslo", [""])[0]
+    data_urodzenia_raw = dane_formularza.get("data_urodzenia", [""])[0].strip()
+
+    try:
+        data_urodzenia = odczytaj_date_z_formularza(data_urodzenia_raw)
+    except ValueError:
+        data_urodzenia = None
+
+    if not imie or not nazwisko or not email or not telefon or not haslo:
+        blad = "Uzupełnij imię, nazwisko, e-mail, telefon i hasło."
+    elif len(haslo) < 8:
+        blad = "Hasło powinno mieć co najmniej 8 znaków."
+    elif znajdz_uzytkownika_po_emailu(email, db) or znajdz_pacjenta_po_emailu(email, db):
+        blad = "Konto z takim adresem e-mail już istnieje."
+    else:
+        pacjent = dodaj_pacjenta(
+            imie=imie,
+            nazwisko=nazwisko,
+            email=email,
+            telefon=telefon,
+            data_urodzenia=data_urodzenia,
+            adres=adres,
+            db=db,
+        )
+        dodaj_uzytkownika_pacjenta(
+            email=email,
+            haslo=haslo,
+            pacjent_id=pacjent["id"],
+            db=db,
+        )
+
+        return RedirectResponse(
+            url="/logowanie?status=konto_utworzone",
+            status_code=303,
+        )
+
+    return templates.TemplateResponse(
+        request,
+        "rejestracja.html",
+        {
+            "komunikat_bledu": blad,
+            "formularz": {
+                "imie": imie,
+                "nazwisko": nazwisko,
+                "email": email,
+                "telefon": telefon,
+                "adres": adres,
+                "data_urodzenia": data_urodzenia_raw,
+            },
+        },
+        status_code=400,
+    )
+
+
+@router.post("/wyloguj")
+def wyloguj_uzytkownika(request: Request):
+    wyczysc_sesje(request)
+
+    return RedirectResponse(url="/logowanie?status=wylogowano", status_code=303)
 
 
 @router.get("/panel-pacjenta")
@@ -64,9 +221,9 @@ def panel_pacjenta(
     request: Request,
     rok: int | None = None,
     miesiac: int | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
     db: Session = Depends(get_db),
 ):
-    pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id, db)
     plan_opieki = pobierz_plan_opieki_pacjenta(pacjent_id, db)
     godziny_przyjec = pobierz_godziny_przyjec(db)
@@ -145,9 +302,9 @@ def widok_moje_wizyty(
     rok: int | None = None,
     miesiac: int | None = None,
     status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
     db: Session = Depends(get_db),
 ):
-    pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id, db)
     godziny_przyjec = pobierz_godziny_przyjec(db)
     moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
@@ -192,19 +349,27 @@ def widok_moje_wizyty(
 def widok_szybki_zapis(
     request: Request,
     lekarz_id: int | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
     db: Session = Depends(get_db),
 ):
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        przygotuj_kontekst_szybkiego_zapisu(lekarz_id=lekarz_id, db=db),
+        przygotuj_kontekst_szybkiego_zapisu(
+            pacjent_id=pacjent_id,
+            lekarz_id=lekarz_id,
+            db=db,
+        ),
     )
 
 
 @router.post("/szybki-zapis")
-async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
-    pacjent_id = 1
-    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+async def zapisz_szybki_zapis(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
 
     try:
         lekarz_id = int(dane_formularza["lekarz_id"][0])
@@ -216,7 +381,8 @@ async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
             request,
             "szybki_zapis.html",
             przygotuj_kontekst_szybkiego_zapisu(
-                "Nie udało się odczytać danych formularza.",
+                pacjent_id=pacjent_id,
+                blad="Nie udało się odczytać danych formularza.",
                 db=db,
             ),
             status_code=400,
@@ -247,7 +413,11 @@ async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request,
         "szybki_zapis.html",
-        przygotuj_kontekst_szybkiego_zapisu(blad, db=db),
+        przygotuj_kontekst_szybkiego_zapisu(
+            pacjent_id=pacjent_id,
+            blad=blad,
+            db=db,
+        ),
         status_code=400,
     )
 
@@ -255,10 +425,9 @@ async def zapisz_szybki_zapis(request: Request, db: Session = Depends(get_db)):
 @router.post("/moje-wizyty/{wizyta_id}/odwolaj")
 async def odwolaj_wizyte_html(
     wizyta_id: int,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
     db: Session = Depends(get_db),
 ):
-    pacjent_id = 1
-
     try:
         odwolaj_wizyte(wizyta_id, pacjent_id, db)
     except (
@@ -276,10 +445,10 @@ async def odwolaj_wizyte_html(
 async def przesun_wizyte_html(
     wizyta_id: int,
     request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
     db: Session = Depends(get_db),
 ):
-    pacjent_id = 1
-    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+    dane_formularza = odczytaj_formularz(await request.body())
 
     try:
         data = dane_formularza["data"][0].strip()
@@ -309,8 +478,11 @@ async def przesun_wizyte_html(
 
 
 @router.get("/recepty")
-def widok_recepty(request: Request, db: Session = Depends(get_db)):
-    pacjent_id = 1
+def widok_recepty(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     pacjent = znajdz_pacjenta(pacjent_id, db)
     recepty = pobierz_recepty_pacjenta(pacjent_id, db)
     apteki = pobierz_apteki(db)
@@ -334,8 +506,12 @@ def widok_recepty(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/lekarze-widok")
-def widok_lekarze(request: Request, objawy_status: str | None = None, db: Session = Depends(get_db)):
-    pacjent_id = 1
+def widok_lekarze(
+    request: Request,
+    objawy_status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     pacjent = znajdz_pacjenta(pacjent_id, db)
     komunikat_sukcesu = None
     komunikat_bledu = None
@@ -363,9 +539,11 @@ def widok_lekarze(request: Request, objawy_status: str | None = None, db: Sessio
 
 
 @router.post("/lekarze-widok/objawy")
-async def zapisz_objawy_pacjenta(request: Request):
-    pacjent_id = 1
-    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+async def zapisz_objawy_pacjenta(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
     objawy = dane_formularza.get("objawy", [])
     opis = dane_formularza.get("opis", [""])[0]
     pilnosc = dane_formularza.get("pilnosc", ["standardowa"])[0]
@@ -391,8 +569,12 @@ async def zapisz_objawy_pacjenta(request: Request):
 
 
 @router.get("/leki")
-def widok_leki(request: Request, status: str | None = None, db: Session = Depends(get_db)):
-    pacjent_id = 1
+def widok_leki(
+    request: Request,
+    status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     pacjent = znajdz_pacjenta(pacjent_id, db)
     leki = pobierz_leki_pacjenta(pacjent_id, db)
     komunikat_sukcesu = None
@@ -418,9 +600,12 @@ def widok_leki(request: Request, status: str | None = None, db: Session = Depend
 
 
 @router.post("/leki/dodaj")
-async def dodaj_lek_html(request: Request, db: Session = Depends(get_db)):
-    pacjent_id = 1
-    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+async def dodaj_lek_html(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
     nazwa = dane_formularza.get("nazwa", [""])[0].strip()
     dawkowanie = dane_formularza.get("dawkowanie", [""])[0].strip()
     zalecenie = dane_formularza.get("zalecenie", [""])[0].strip()
@@ -440,13 +625,20 @@ async def dodaj_lek_html(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/apteki")
-def widok_apteki(request: Request, db: Session = Depends(get_db)):
-    return widok_leki(request, db)
+def widok_apteki(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    return widok_leki(request, pacjent_id=pacjent_id, db=db)
 
 
 @router.get("/historia")
-def widok_historia(request: Request, db: Session = Depends(get_db)):
-    pacjent_id = 1
+def widok_historia(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     pacjent = znajdz_pacjenta(pacjent_id, db)
     wpisy_historii = pobierz_historie_medyczna_pacjenta(pacjent_id, db)[:3]
 
@@ -462,8 +654,12 @@ def widok_historia(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/profil")
-def widok_profil(request: Request, db: Session = Depends(get_db)):
-    pacjent_id = 1
+def widok_profil(
+    request: Request,
+    status: str | None = None,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     pacjent = znajdz_pacjenta(pacjent_id, db)
     plan_opieki = pobierz_plan_opieki_pacjenta(pacjent_id, db)
     moje_wizyty = pobierz_wizyty_pacjenta(pacjent_id, db)
@@ -484,13 +680,53 @@ def widok_profil(request: Request, db: Session = Depends(get_db)):
             "najblizsza_wizyta": najblizsza_wizyta,
             "ostatnie_wizyty": ostatnie_wizyty,
             "plan_opieki": plan_opieki,
+            "komunikat_sukcesu": "Dane profilu zostały zapisane."
+            if status == "profil_zapisany"
+            else None,
         },
     )
 
 
+@router.post("/profil")
+async def aktualizuj_profil(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
+    dane_formularza = odczytaj_formularz(await request.body())
+    imie = dane_formularza.get("imie", [""])[0].strip()
+    nazwisko = dane_formularza.get("nazwisko", [""])[0].strip()
+    telefon = dane_formularza.get("telefon", [""])[0].strip()
+    adres = dane_formularza.get("adres", [""])[0].strip() or None
+    grupa_krwi = dane_formularza.get("grupa_krwi", [""])[0].strip() or None
+    data_urodzenia_raw = dane_formularza.get("data_urodzenia", [""])[0].strip()
+
+    try:
+        data_urodzenia = odczytaj_date_z_formularza(data_urodzenia_raw)
+    except ValueError:
+        data_urodzenia = None
+
+    if imie and nazwisko and telefon:
+        zaktualizuj_pacjenta(
+            pacjent_id=pacjent_id,
+            imie=imie,
+            nazwisko=nazwisko,
+            telefon=telefon,
+            data_urodzenia=data_urodzenia,
+            adres=adres,
+            grupa_krwi=grupa_krwi,
+            db=db,
+        )
+
+    return RedirectResponse(url="/profil?status=profil_zapisany", status_code=303)
+
+
 @router.get("/ustawienia")
-def widok_ustawienia(request: Request, db: Session = Depends(get_db)):
-    pacjent_id = 1
+def widok_ustawienia(
+    request: Request,
+    pacjent_id: int = Depends(wymagaj_pacjenta_z_sesji),
+    db: Session = Depends(get_db),
+):
     pacjent = znajdz_pacjenta(pacjent_id, db)
 
     return templates.TemplateResponse(

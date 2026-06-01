@@ -124,11 +124,11 @@ def przygotuj_terminy_lekarza(lekarz_id: int, liczba_dni: int = 90, db=None):
 
 
 def przygotuj_kontekst_szybkiego_zapisu(
+    pacjent_id: int,
     blad: str | None = None,
     lekarz_id: int | None = None,
     db=None,
 ):
-    pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id, db)
     godziny_przyjec = pobierz_godziny_przyjec(db)
     dostepne_terminy = przygotuj_dostepne_terminy_szybkiego_zapisu(db)

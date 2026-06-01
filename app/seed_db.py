@@ -29,6 +29,7 @@ from app.models.recepta_lek import ReceptaLek
 from app.models.specjalizacja import Specjalizacja
 from app.models.uzytkownik import Uzytkownik
 from app.models.wizyta import Wizyta
+from app.services.auth import zahashuj_haslo
 
 
 def tabela_ma_dane(db, model):
@@ -82,6 +83,7 @@ def przygotuj_pacjentow():
                 telefon=pacjent["telefon"],
                 data_urodzenia=date.fromisoformat(pacjent["data_urodzenia"]),
                 adres=pacjent["adres"],
+                grupa_krwi=pacjent.get("grupa_krwi"),
             )
         )
 
@@ -165,13 +167,14 @@ def przygotuj_apteki():
 def przygotuj_uzytkownikow():
     return [
         Uzytkownik(
-            id=1,
-            email="jan.kowalski@example.com",
-            haslo_hash="demo-hash-do-zmiany",
+            id=pacjent["id"],
+            email=pacjent["email"],
+            haslo_hash=zahashuj_haslo("Pacjent123!"),
             rola="pacjent",
-            pacjent_id=1,
+            pacjent_id=pacjent["id"],
             lekarz_id=None,
         )
+        for pacjent in pacjenci
     ]
 
 
@@ -307,7 +310,7 @@ def przygotuj_historie_medyczna():
         przygotowane_wpisy.append(
             HistoriaMedyczna(
                 id=indeks,
-                pacjent_id=1,
+                pacjent_id=wpis.get("pacjent_id", 1),
                 lekarz_id=znajdz_lekarza_id_po_nazwie(wpis["lekarz"]),
                 wizyta_id=None,
                 data=date.fromisoformat(wpis["data"]),
@@ -320,6 +323,46 @@ def przygotuj_historie_medyczna():
         )
 
     return przygotowane_wpisy
+
+
+def dodaj_brakujace_rekordy_po_id(db, model, dane, nazwa_tabeli: str):
+    dodane = 0
+
+    for rekord in dane:
+        if db.get(model, rekord.id) is None:
+            db.add(rekord)
+            dodane += 1
+
+    if dodane:
+        db.commit()
+        print(f"Uzupelniono tabele {nazwa_tabeli}: {dodane} nowych rekordow.")
+
+
+def uzupelnij_dane_demo(db):
+    dodaj_brakujace_rekordy_po_id(db, Pacjent, przygotuj_pacjentow(), "pacjenci")
+    dodaj_brakujace_rekordy_po_id(db, Wizyta, przygotuj_wizyty(), "wizyty")
+    dodaj_brakujace_rekordy_po_id(
+        db,
+        HistoriaMedyczna,
+        przygotuj_historie_medyczna(),
+        "historia_medyczna",
+    )
+
+    for uzytkownik in przygotuj_uzytkownikow():
+        istniejacy = db.get(Uzytkownik, uzytkownik.id)
+
+        if istniejacy is None:
+            db.add(uzytkownik)
+        elif not istniejacy.haslo_hash.startswith("pbkdf2_sha256$"):
+            istniejacy.haslo_hash = zahashuj_haslo("Pacjent123!")
+
+    for dane_pacjenta in pacjenci:
+        pacjent = db.get(Pacjent, dane_pacjenta["id"])
+
+        if pacjent and not pacjent.grupa_krwi:
+            pacjent.grupa_krwi = dane_pacjenta.get("grupa_krwi")
+
+    db.commit()
 
 
 def seeduj_baze():
@@ -386,6 +429,7 @@ def seeduj_baze():
             przygotuj_historie_medyczna(),
             "historia_medyczna",
         )
+        uzupelnij_dane_demo(db)
         zsynchronizuj_sekwencje_postgres(db, modele_z_id)
     finally:
         db.close()

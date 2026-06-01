@@ -18,5 +18,6 @@ class Pacjent(Base):
     telefon: Mapped[str] = mapped_column(String(30))
     data_urodzenia: Mapped[date | None] = mapped_column(Date, nullable=True)
     adres: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    grupa_krwi: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
     wizyty: Mapped[list["Wizyta"]] = relationship(back_populates="pacjent")
