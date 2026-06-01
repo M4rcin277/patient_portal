@@ -1,6 +1,6 @@
 from datetime import date, datetime, time
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from app import models
 from app.seed_data import (
@@ -45,6 +45,28 @@ def dodaj_dane_startowe(db, model, dane, nazwa_tabeli: str):
     db.add_all(dane)
     db.commit()
     print(f"Dodano dane startowe do tabeli {nazwa_tabeli}.")
+
+
+def zsynchronizuj_sekwencje_postgres(db, modele):
+    if db.bind.dialect.name != "postgresql":
+        return
+
+    for model in modele:
+        nazwa_tabeli = model.__tablename__
+        max_id = db.scalar(select(func.max(model.id))) or 0
+        sekwencja = db.scalar(
+            text("SELECT pg_get_serial_sequence(:table_name, 'id')"),
+            {"table_name": nazwa_tabeli},
+        )
+
+        if sekwencja:
+            db.execute(
+                text("SELECT setval(:sequence_name, :value, true)"),
+                {"sequence_name": sekwencja, "value": max_id},
+            )
+
+    db.commit()
+    print("Sekwencje PostgreSQL zostaly zsynchronizowane.")
 
 
 def przygotuj_pacjentow():
@@ -302,6 +324,22 @@ def przygotuj_historie_medyczna():
 
 def seeduj_baze():
     db = SessionLocal()
+    modele_z_id = [
+        Pacjent,
+        Lekarz,
+        Wizyta,
+        GodzinaPrzyjec,
+        PlanOpieki,
+        Apteka,
+        Uzytkownik,
+        Specjalizacja,
+        Placowka,
+        Lek,
+        PacjentLek,
+        Recepta,
+        ReceptaLek,
+        HistoriaMedyczna,
+    ]
 
     try:
         dodaj_dane_startowe(db, Pacjent, przygotuj_pacjentow(), "pacjenci")
@@ -348,6 +386,7 @@ def seeduj_baze():
             przygotuj_historie_medyczna(),
             "historia_medyczna",
         )
+        zsynchronizuj_sekwencje_postgres(db, modele_z_id)
     finally:
         db.close()
 

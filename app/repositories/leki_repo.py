@@ -50,6 +50,58 @@ def pobierz_leki_pacjenta(pacjent_id: int, db: Session | None = None):
             db.close()
 
 
+def znajdz_lub_utworz_lek(nazwa: str, db: Session):
+    lek = db.scalar(select(Lek).where(Lek.nazwa == nazwa))
+
+    if lek:
+        return lek
+
+    lek = Lek(
+        nazwa=nazwa,
+        substancja="Dodany przez pacjenta",
+        dawka=None,
+        postac=None,
+    )
+    db.add(lek)
+    db.flush()
+
+    return lek
+
+
+def dodaj_lek_pacjenta(
+    pacjent_id: int,
+    nazwa: str,
+    dawkowanie: str,
+    zalecenie: str | None,
+    db: Session | None = None,
+):
+    czy_zamknac_db = db is None
+    db = db or SessionLocal()
+
+    try:
+        lek = znajdz_lub_utworz_lek(nazwa, db)
+        przypisany_lek = PacjentLek(
+            pacjent_id=pacjent_id,
+            lek_id=lek.id,
+            lekarz_id=None,
+            dawkowanie=dawkowanie,
+            zalecenie=zalecenie or "Lek dodany przez pacjenta.",
+            status="Aktywny",
+            do_kiedy="bez terminu",
+            ikona="bi-capsule",
+            kolor="blue",
+        )
+
+        db.add(przypisany_lek)
+        db.commit()
+        db.refresh(przypisany_lek)
+
+        return przypisany_lek.id
+    finally:
+        if czy_zamknac_db:
+            db.close()
+
+
 def przygotuj_harmonogram_lekow(leki_pacjenta):
     godziny = ["08:00", "13:00", "20:00"]
     pory = ["Rano", "Południe", "Wieczór"]

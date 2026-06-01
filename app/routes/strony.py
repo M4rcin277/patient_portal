@@ -2,6 +2,7 @@ from datetime import date
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -15,9 +16,18 @@ from app.database import get_db
 from app.repositories.apteki_repo import pobierz_apteki
 from app.repositories.godziny_przyjec_repo import pobierz_godziny_przyjec
 from app.repositories.historia_repo import pobierz_historie_medyczna_pacjenta
-from app.repositories.leki_repo import pobierz_leki_pacjenta, przygotuj_harmonogram_lekow
+from app.repositories.leki_repo import (
+    dodaj_lek_pacjenta,
+    pobierz_leki_pacjenta,
+    przygotuj_harmonogram_lekow,
+)
 from app.repositories.lekarze_repo import pobierz_wszystkich_lekarzy
+from app.repositories.objawy_repo import (
+    pobierz_ostatnie_zgloszenie_objawow,
+    zapisz_zgloszenie_objawow,
+)
 from app.repositories.pacjenci_repo import znajdz_pacjenta
+from app.repositories.placowki_repo import pobierz_placowki
 from app.repositories.plan_opieki_repo import pobierz_plan_opieki_pacjenta
 from app.repositories.recepty_repo import pobierz_recepty_pacjenta
 from app.services.statusy_wizyt import (
@@ -42,6 +52,11 @@ from app.services.wizyty import (
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+@router.get("/logowanie")
+def widok_logowania(request: Request):
+    return templates.TemplateResponse(request, "logowanie.html", {})
 
 
 @router.get("/panel-pacjenta")
@@ -299,6 +314,11 @@ def widok_recepty(request: Request, db: Session = Depends(get_db)):
     pacjent = znajdz_pacjenta(pacjent_id, db)
     recepty = pobierz_recepty_pacjenta(pacjent_id, db)
     apteki = pobierz_apteki(db)
+    licznik_recept = {
+        "aktywne": len([recepta for recepta in recepty if recepta["status"] == "aktywne"]),
+        "wygasajace": len([recepta for recepta in recepty if recepta["status"] == "wygasajace"]),
+        "archiwum": len([recepta for recepta in recepty if recepta["status"] == "archiwum"]),
+    }
 
     return templates.TemplateResponse(
         request,
@@ -307,15 +327,25 @@ def widok_recepty(request: Request, db: Session = Depends(get_db)):
             "pacjent": pacjent,
             "aktywna_strona": "recepty",
             "recepty_pacjenta": recepty,
+            "licznik_recept": licznik_recept,
             "apteki": apteki,
         },
     )
 
 
 @router.get("/lekarze-widok")
-def widok_lekarze(request: Request, db: Session = Depends(get_db)):
+def widok_lekarze(request: Request, objawy_status: str | None = None, db: Session = Depends(get_db)):
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id, db)
+    komunikat_sukcesu = None
+    komunikat_bledu = None
+
+    if objawy_status == "zapisane":
+        komunikat_sukcesu = "Opis objawów został zapisany. System podpowiedział specjalizację na podstawie zgłoszenia."
+    elif objawy_status == "brak_danych":
+        komunikat_bledu = "Zaznacz objaw albo wpisz krótki opis dolegliwości."
+    elif objawy_status == "blad_mongo":
+        komunikat_bledu = "Nie udało się zapisać objawów w MongoDB. Sprawdź, czy baza jest uruchomiona."
 
     return templates.TemplateResponse(
         request,
@@ -324,15 +354,54 @@ def widok_lekarze(request: Request, db: Session = Depends(get_db)):
             "pacjent": pacjent,
             "aktywna_strona": "lekarze",
             "lekarze": pobierz_wszystkich_lekarzy(db),
+            "placowki": pobierz_placowki(db),
+            "ostatnie_zgloszenie_objawow": pobierz_ostatnie_zgloszenie_objawow(pacjent_id),
+            "komunikat_sukcesu": komunikat_sukcesu,
+            "komunikat_bledu": komunikat_bledu,
         },
     )
 
 
+@router.post("/lekarze-widok/objawy")
+async def zapisz_objawy_pacjenta(request: Request):
+    pacjent_id = 1
+    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+    objawy = dane_formularza.get("objawy", [])
+    opis = dane_formularza.get("opis", [""])[0]
+    pilnosc = dane_formularza.get("pilnosc", ["standardowa"])[0]
+
+    try:
+        zapisz_zgloszenie_objawow(
+            pacjent_id=pacjent_id,
+            objawy=objawy,
+            opis=opis,
+            pilnosc=pilnosc,
+        )
+    except ValueError:
+        status = "brak_danych"
+    except RuntimeError:
+        status = "blad_mongo"
+    else:
+        status = "zapisane"
+
+    return RedirectResponse(
+        url=f"/lekarze-widok?objawy_status={status}",
+        status_code=303,
+    )
+
+
 @router.get("/leki")
-def widok_leki(request: Request, db: Session = Depends(get_db)):
+def widok_leki(request: Request, status: str | None = None, db: Session = Depends(get_db)):
     pacjent_id = 1
     pacjent = znajdz_pacjenta(pacjent_id, db)
     leki = pobierz_leki_pacjenta(pacjent_id, db)
+    komunikat_sukcesu = None
+    komunikat_bledu = None
+
+    if status == "lek_dodany":
+        komunikat_sukcesu = "Lek został dodany do listy pacjenta."
+    elif status == "niepoprawny_lek":
+        komunikat_bledu = "Uzupełnij nazwę leku i dawkowanie."
 
     return templates.TemplateResponse(
         request,
@@ -342,8 +411,32 @@ def widok_leki(request: Request, db: Session = Depends(get_db)):
             "aktywna_strona": "leki",
             "leki_pacjenta": leki,
             "harmonogram_lekow": przygotuj_harmonogram_lekow(leki),
+            "komunikat_sukcesu": komunikat_sukcesu,
+            "komunikat_bledu": komunikat_bledu,
         },
     )
+
+
+@router.post("/leki/dodaj")
+async def dodaj_lek_html(request: Request, db: Session = Depends(get_db)):
+    pacjent_id = 1
+    dane_formularza = parse_qs((await request.body()).decode("utf-8"))
+    nazwa = dane_formularza.get("nazwa", [""])[0].strip()
+    dawkowanie = dane_formularza.get("dawkowanie", [""])[0].strip()
+    zalecenie = dane_formularza.get("zalecenie", [""])[0].strip()
+
+    if not nazwa or not dawkowanie:
+        return RedirectResponse(url="/leki?status=niepoprawny_lek", status_code=303)
+
+    dodaj_lek_pacjenta(
+        pacjent_id=pacjent_id,
+        nazwa=nazwa,
+        dawkowanie=dawkowanie,
+        zalecenie=zalecenie,
+        db=db,
+    )
+
+    return RedirectResponse(url="/leki?status=lek_dodany", status_code=303)
 
 
 @router.get("/apteki")

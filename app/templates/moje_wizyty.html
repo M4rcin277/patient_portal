@@ -67,7 +67,7 @@
       <span class="large-calendar-day-name">Nd</span>
 
       {% for dzien in kalendarz_wizyt["dni"] %}
-      <div class="large-calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['ma_wizyte'] %} has-visit visit-{{ dzien['typ_wizyty'] }}{% endif %}">
+      <div class="large-calendar-day{% if dzien['wyciszony'] %} muted{% endif %}{% if dzien['czy_dzisiaj'] and not dzien['ma_wizyte'] %} is-today{% endif %}{% if dzien['ma_wizyte'] %} has-visit visit-{{ dzien['typ_wizyty'] }}{% endif %}">
         <span>{{ dzien["numer"] }}</span>
         {% if dzien["ma_wizyte"] %}
         <strong>{{ dzien["wizyta"]["godzina"] }}</strong>

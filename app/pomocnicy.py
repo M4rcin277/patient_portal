@@ -185,6 +185,7 @@ def przygotuj_kalendarz_wizyt(
                 + 1,
                 "wyciszony": True,
                 "ma_wizyte": False,
+                "czy_dzisiaj": False,
             }
         )
 
@@ -208,6 +209,7 @@ def przygotuj_kalendarz_wizyt(
                 "numer": numer_dnia,
                 "wyciszony": False,
                 "ma_wizyte": wizyta is not None,
+                "czy_dzisiaj": data_dnia == dzisiaj,
                 "wizyta": wizyta,
                 "typ_wizyty": typ_wizyty,
             }
@@ -219,6 +221,7 @@ def przygotuj_kalendarz_wizyt(
                 "numer": "",
                 "wyciszony": True,
                 "ma_wizyte": False,
+                "czy_dzisiaj": False,
             }
         )
 

@@ -34,6 +34,17 @@ def formatuj_liczbe_dni(data_waznosci: date):
     return f"{liczba_dni} dni"
 
 
+def pobierz_status_recepty(data_waznosci: date):
+    liczba_dni = (data_waznosci - date.today()).days
+
+    if liczba_dni < 0:
+        return "archiwum"
+    if liczba_dni <= 7:
+        return "wygasajace"
+
+    return "aktywne"
+
+
 def policz_leki_recepty(db: Session, recepta_id: int):
     zapytanie = select(ReceptaLek).where(ReceptaLek.recepta_id == recepta_id)
 
@@ -64,6 +75,7 @@ def pobierz_recepty_pacjenta(pacjent_id: int, db: Session | None = None):
                     "wystawiono": formatuj_date(recepta.wystawiono),
                     "wazna_do": formatuj_date(recepta.wazna_do),
                     "dni": formatuj_liczbe_dni(recepta.wazna_do),
+                    "status": pobierz_status_recepty(recepta.wazna_do),
                     "liczba_lekow": policz_leki_recepty(db, recepta.id),
                     "kolor": KOLORY_RECEPT[indeks % len(KOLORY_RECEPT)],
                     "ikona": IKONY_RECEPT[indeks % len(IKONY_RECEPT)],

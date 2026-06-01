@@ -50,6 +50,21 @@ def przygotuj_termin_dla_szybkiego_zapisu(lekarz, data_terminu, godzina, db=None
     }
 
 
+def wybierz_godzine_dla_dnia(godziny_przyjec, indeks_startowy, data_terminu):
+    if data_terminu > date.today():
+        return godziny_przyjec[indeks_startowy % len(godziny_przyjec)]
+
+    for przesuniecie in range(len(godziny_przyjec)):
+        godzina = godziny_przyjec[
+            (indeks_startowy + przesuniecie) % len(godziny_przyjec)
+        ]
+
+        if not termin_jest_w_przeszlosci(data_terminu.isoformat(), godzina):
+            return godzina
+
+    return None
+
+
 def przygotuj_dostepne_terminy_szybkiego_zapisu(db=None):
     dzisiaj = date.today()
     przesuniecia_dni = [0, 1, 2, 3, 5, 8, 14, 21, 34, 45, 60]
@@ -59,9 +74,15 @@ def przygotuj_dostepne_terminy_szybkiego_zapisu(db=None):
     for indeks, lekarz in enumerate(pobierz_wszystkich_lekarzy(db)):
         for pozycja_dnia, przesuniecie in enumerate(przesuniecia_dni):
             data_terminu = dzisiaj + timedelta(days=przesuniecie)
-            godzina = godziny_przyjec[
-                (indeks + pozycja_dnia) % len(godziny_przyjec)
-            ]
+            godzina = wybierz_godzine_dla_dnia(
+                godziny_przyjec,
+                indeks + pozycja_dnia,
+                data_terminu,
+            )
+
+            if godzina is None:
+                continue
+
             termin = przygotuj_termin_dla_szybkiego_zapisu(
                 lekarz,
                 data_terminu,

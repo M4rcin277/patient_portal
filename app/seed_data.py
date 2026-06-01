@@ -57,6 +57,15 @@ lekarze = [
         "lokalizacja": "Centrum Medyczne Zdrowie, Warszawa",
         "tryb_wizyty": "Stacjonarna, Online",
     },
+    {
+        "id": 5,
+        "imie": "Tomasz",
+        "nazwisko": "Zieliński",
+        "specjalizacja": "Lekarz rodzinny",
+        "miasto": "Warszawa",
+        "lokalizacja": "Centrum Medyczne Zdrowie, Warszawa",
+        "tryb_wizyty": "Stacjonarna, Online",
+    },
 ]
 
 
@@ -68,6 +77,11 @@ godziny_przyjec = [
     "11:00",
     "11:30",
     "12:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
 ]
 
 
